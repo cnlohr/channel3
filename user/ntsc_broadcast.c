@@ -168,7 +168,7 @@ void ICACHE_FLASH_ATTR testi2s_init() {
 	for( ; x < 19; x++ )
 		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_B)*I2SDMABUFLEN];
 	i2sBufDesc[x-1].unused = 2;
-	for( ; x < 260; x++ )
+	for( ; x < 259; x++ )
 	{
 		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_LIN)*I2SDMABUFLEN];
 		i2sBufDesc[x].unused = 1;//x&1; //every other line
@@ -190,7 +190,7 @@ void ICACHE_FLASH_ATTR testi2s_init() {
 	for( ; x < 283; x++ )
 		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_B)*I2SDMABUFLEN];
 	i2sBufDesc[x-1].unused = 3;
-	for( ; x < 520; x++ )
+	for( ; x < 519; x++ )
 	{
 		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_LIN)*I2SDMABUFLEN];
 		i2sBufDesc[x].unused = 1;//x&1; //every other line
