@@ -1,0 +1,60 @@
+<html>
+<!-- Copyright (C) 2015 <>< Charles Lohr, see LICENSE file for more info.
+This particular file may be licensed under the MIT/x11, New BSD or ColorChord Licenses. -->
+<head>
+<title>esp8266 channel 3 controller</title>
+<script language="javascript" type="text/javascript" src=jquery-2.1.4.min.js.gz></script>
+<script language="javascript" type="text/javascript" src=menuinterface.js></script>
+<script language="javascript" type="text/javascript" src=main.js></script>
+<meta charset="UTF-8">
+<style>
+table { width: 100%; }
+td { vertical-align: top; }
+.collapsible { display:none; }
+.inbutton { background-color:blue; }
+#SystemMessage { position: fixed; top: 5px; background-color: DarkSlateBlue; color: #ffffff; left: 5px; display:none; }
+.dragandrophandler { border:2px dotted #0B85A1; color:#92AAB0;vertical-align:middle;padding:10px 10px 10 10px;margin-bottom:10px;font-size:200%;}
+.unsaved-input { border: 2px solid pink; border-radius: 7px; }
+</style>
+</head>
+<body>
+<h2>esp8266 ntsc controller</h2>
+<hr>
+
+<table id="MainMenu">
+
+<tbody>
+
+<tr><td width=1>
+<input type=submit onclick="ShowHideEvent( 'Introduction' );" value="Introduction"></td><td>
+<div id=Introduction class="collapsible">
+<table border=1><tr><td>
+<p>Welcome to the channel3 Web-based GUI.</p>
+<p>This GUI uses WebSockets, and has only been tested under the newest (as of Jan, 2016) Chrome and Firefox browsers.</p>
+<p>For more information about this project, visit it on github, here: <a href=https://github.com/cnlohr/channel3>https://github.com/cnlohr/channel3</a></p>
+</div></td></tr></table></td></tr>
+
+
+
+<tr><td width=1>
+<input type=submit onclick="ShowHideEvent( 'NTSC' ); KickNTSC();" value="NTSC"></td><td>
+<div id=NTSC class="collapsible">
+<TABLE>
+<TR><TD>Black</TD><TD><DIV id=CB0>...</DIV></TD><TD><INPUT id="d_0"><INPUT id="c_0"></TD></TR>
+<TR><TD>w-t-b</TD><TD><DIV id=CB1>...</DIV></TD><TD><INPUT id="d_1"><INPUT id="c_1"></TD></TR>
+<TR><TD>b-t-w</TD><TD><DIV id=CB2>...</DIV></TD><TD><INPUT id="d_2"><INPUT id="c_2"></TD></TR>
+<TR><TD>White</TD><TD><DIV id=CB3>...</DIV></TD><TD><INPUT id="d_3"><INPUT id="c_3"></TD></TR>
+<TR><TD>Sync</TD><TD><DIV id=CB4>...</DIV></TD><TD><INPUT id="d_4"><INPUT id="c_4"></TD></TR>
+</TABLE>
+</div></td></tr>
+
+</tbody>
+
+</table>
+
+<p><font size=-2>Copyright (C) 2016 &lt&gt&lt Charles Lohr, See LICENSE file for more info.</font></p>
+<div id=SystemMessage>...</div>
+</body>
+</html>
+
+
