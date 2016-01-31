@@ -3,6 +3,18 @@
 #ifndef _NTSC_BROADCAST_TEST
 #define _NTSC_BROADCAST_TEST
 
+/*
+	This is the NTSC Broadcast code.  To set it up, call testi2s_init.
+	This will set up the DMA engine and all the chains for outputting 
+	broadcast.
+
+	This is tightly based off of SpriteTM's ESP8266 MP3 Decoder.
+
+	If you change the RF Maps, please call redo_maps, this will make
+	the system update all the non-frame data to use the right bit patterns.
+*/
+
+
 //Stuff that should be for the header:
 
 #include <c_types.h>
@@ -32,16 +44,15 @@
 #define BTW_LEVEL RFmaps[2]
 #define WTB_LEVEL RFmaps[1]
 #define BLACK_LEVEL RFmaps[0]
-
-extern uint32_t RFmaps[5];
-
+extern uint32_t RFmaps[5]; //Actual bits to put on wire when commanding certain colors/sync/etc.
 
 
+//Framebuffer width/height
 #define FBW 256
 #define FBH 240
 
-extern int gframe;
-extern uint8_t framebuffer[((FBW/8)*(FBH))*2]; //prevent overscan a bit.
+extern int gframe; //Current frame #
+extern uint8_t framebuffer[((FBW/8)*(FBH))*2]; //prevent overscan a bit.  (*2 = double buffer)
 
 
 void ICACHE_FLASH_ATTR testi2s_init();
