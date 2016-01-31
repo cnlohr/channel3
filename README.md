@@ -24,4 +24,5 @@ For all the 3D and text, I'm using a new modified version of my "rawdraw" librar
 
 I made a youtube video about this project, available here:
 
-[[NOT YET UPDATED]]
+[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/SSiRkpgwVKY/0.jpg)](http://www.youtube.com/watch?v=SSiRkpgwVKY)
+
