@@ -5,26 +5,26 @@
 #include <mystuff.h>
 
 //Defaults
-const uint32_t tRFmaps[] = {
-		BLACK_LEVEL_d, WTB_LEVEL_d, BTW_LEVEL_d, WHITE_LEVEL_d, SYNC_LEVEL_d };
+//const uint32_t tRFmaps[] = {
+//		BLACK_LEVEL_d, WTB_LEVEL_d, BTW_LEVEL_d, WHITE_LEVEL_d, SYNC_LEVEL_d };
 
 void ICACHE_FLASH_ATTR ReinitSettings()
 {
-	printf( "Restoring to factory %d\n", sizeof( tRFmaps ) );
+/*	printf( "Restoring to factory %d\n", sizeof( tRFmaps ) );
 	//Load from factory default.
-	ets_memcpy( SETTINGS.UserData, tRFmaps, sizeof( tRFmaps ) );
-	ets_memcpy( RFmaps, tRFmaps, sizeof( tRFmaps ) );
+//	ets_memcpy( SETTINGS.UserData, tRFmaps, sizeof( tRFmaps ) );
+//	ets_memcpy( RFmaps, tRFmaps, sizeof( tRFmaps ) );
 	int i;
 	for( i = 0; i < 5; i++ )
 	{
 		printf( " %08x\n", tRFmaps[i] );
-	}
+	}*/
 }
 
 void ICACHE_FLASH_ATTR SettingsLoaded()
 {
 	printf( "Loading to from \"settings\"\n" );
-	ets_memcpy( RFmaps, SETTINGS.UserData, sizeof( RFmaps ) );
+//	ets_memcpy( RFmaps, SETTINGS.UserData, sizeof( RFmaps ) );
 }
 
 
@@ -39,7 +39,7 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 		buffend += ets_sprintf( buffend, "CC" );
 		return buffend-buffer;
 	}
-
+/*
 	case 'g': case 'G': //get NTSC bits
 	{
 		int i, it = 0;
@@ -75,7 +75,7 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 		redo_maps();
 		return buffend-buffer;
 	}
-
+*/
 
 	}
 	return -1;

@@ -51,7 +51,7 @@ void ICACHE_FLASH_ATTR SetupMatrix( )
 
 
 
-#define INITIAL_SHOW_STATE 0
+#define INITIAL_SHOW_STATE 7
 extern int gframe;
 char lastct[256];
 int showstate = INITIAL_SHOW_STATE;
@@ -105,8 +105,8 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		tdRotateEA( ProjectionMatrix, -20, 0, 0 );
 		tdRotateEA( ModelviewMatrix, 0, 0, framessostate );
 
-		for( y = -20; y < 20; y++ )
-		for( x = -20; x < 20; x++ )
+		for( y = -18; y < 18; y++ )
+		for( x = -18; x < 18; x++ )
 		{
 			int o = -framessostate*2;
 			int t = Height( x, y, o )* 2 + 2000;

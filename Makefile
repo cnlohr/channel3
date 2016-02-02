@@ -15,7 +15,8 @@ SRCS:=driver/uart.c \
 	user/custom_commands.c \
 	user/ntsc_broadcast.c \
 	user/user_main.c \
-	user/3d.c 
+	user/3d.c \
+	tablemaker/broadcast_tables.c
 
 GCC_FOLDER:=~/esp8266/esp-open-sdk/xtensa-lx106-elf
 ESPTOOL_PY:=~/esp8266/esptool/esptool.py

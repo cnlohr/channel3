@@ -42,12 +42,15 @@ Extra copyright info:
 #include "ntsc_broadcast.h"
 #include "user_interface.h"
 #include "pin_mux_register.h"
+#include "../tablemaker/broadcast_tables.h"
 #include <dmastuff.h>
 
 #define WS_I2S_BCK 1  //Can't be less than 1.
 #define WS_I2S_DIV 2
 
 #define I2SDMABUFLEN (159)		//Length of one buffer, in 32-bit words.
+#define LINE16LEN (I2SDMABUFLEN*2)
+#define LINE32LEN I2SDMABUFLEN
 
 //Bit clock @ 80MHz = 12.5ns
 //Word clock = 400ns
@@ -57,12 +60,6 @@ Extra copyright info:
 #define NTSC_LINES 525
 #define LINETYPES 6
 
-//#define PATTERN 0b10010010010010010010010010010010 //Why does this work well?  (11 repeats)
-//#define PATTERN 0b10010010100100101001001010010010 //12 repeats
-
-
-uint32_t RFmaps[] = {
-	BLACK_LEVEL_d, WTB_LEVEL_d, BTW_LEVEL_d, WHITE_LEVEL_d, SYNC_LEVEL_d };
 
 //WS_I2S_DIV - if 1 will actually be 2.  Can't be less than 2.
 
@@ -73,34 +70,134 @@ uint32_t RFmaps[] = {
 //		I2S_CLKM_DIV_NUM - 5-127
 //		I2S_BCK_DIV_NUM - 2-127
 
-#define FT_STA 0
-#define FT_STB 1
-#define FT_B 2
-#define FT_SRA 3
-#define FT_SRB 4
-#define FT_LIN 5
-uint32_t i2sBD[I2SDMABUFLEN*LINETYPES];
+
 
 //I2S DMA buffer descriptors
-static struct sdio_queue i2sBufDesc[NTSC_LINES];
+static struct sdio_queue i2sBufDesc[DMABUFFERDEPTH];
+uint16_t i2sBD[I2SDMABUFLEN*DMABUFFERDEPTH*2];
+
 //Queue which contains empty DMA buffers
 
 //This routine is called as soon as the DMA routine has something to tell us. All we
 //handle here is the RX_EOF_INT status, which indicate the DMA has sent a buffer whose
 //descriptor has the 'EOF' field set to 1.
-int gi;
-int gline;
-int gframe;
-
-
+int gline = 0;
+int gframe = 0;
+static int linescratch;
 uint8_t framebuffer[((FBW/8)*(FBH))*2];
 
+uint16_t * tablestart = &premodulated_table[0];
+uint16_t * tablept = &premodulated_table[0];
+uint16_t * tableend = &premodulated_table[PREMOD_ENTRIES*PREMOD_SIZE];
+uint16_t * curdma;
+
+uint8_t pixline; //line number currently being written out.
+
+LOCAL void fillwith( uint16_t qty, uint8_t color )  //Fills in "doubles"
+{
+	for( linescratch = 0; linescratch < qty; linescratch++ )
+	{
+		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
+		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
+		if( tablept == tableend ) tablept = tablestart;
+	}
+}
+
+
+//XXX TODO: Revisit the length of time the system is at SYNC, BLACK, etc.
+
+LOCAL void FT_STA()
+{
+	pixline = 0; //Reset the framebuffer out line count (can be done multiple times)
+
+	fillwith( 6, SYNC_LEVEL );
+	fillwith( 73, BLACK_LEVEL );
+	fillwith( 6, SYNC_LEVEL );
+	fillwith( LINE32LEN - (6+73+6), BLACK_LEVEL );
+}
+
+
+LOCAL void FT_STB()
+{
+	fillwith( 68, SYNC_LEVEL );
+	fillwith( 11, BLACK_LEVEL );
+	fillwith( 68, SYNC_LEVEL );
+	fillwith( LINE32LEN - (68+11+68), BLACK_LEVEL );
+}
+
+LOCAL void FT_B()
+{
+	fillwith( 12, SYNC_LEVEL );
+	fillwith( 2, BLACK_LEVEL );
+	fillwith( 4, COLORBURST_LEVEL );
+	fillwith( LINE32LEN-12-6, BLACK_LEVEL );
+}
+
+LOCAL void FT_SRA()
+{
+	fillwith( 6, SYNC_LEVEL );
+	fillwith( 73, BLACK_LEVEL );
+	fillwith( 68, SYNC_LEVEL );
+	fillwith( LINE32LEN - (6+73+68), BLACK_LEVEL );
+}
+
+LOCAL void FT_SRB()
+{
+	fillwith( 68, SYNC_LEVEL );
+	fillwith( 11, BLACK_LEVEL );
+	fillwith( 6, SYNC_LEVEL );
+	fillwith( LINE32LEN - (6+11+68), BLACK_LEVEL );
+}
+
+LOCAL void FT_LIN()
+{
+	//TODO: Make this do something useful.
+	fillwith( 11, SYNC_LEVEL );
+	fillwith( 2, BLACK_LEVEL );
+	fillwith( 4, COLORBURST_LEVEL );
+	fillwith( 12, BLACK_LEVEL );
+
+	int fframe = gframe & 1;
+	uint8_t * fbs = &framebuffer[(pixline * (FBW/8)) + ( ((FBW/8)*(FBH))*(fframe)) ];
+
+	for( linescratch = 0; linescratch < FBW/8; linescratch++ )
+	{
+		uint8_t fbb = *(fbs++);
+
+		*(curdma++) = tablept[(fbb>>1)&1];		tablept += PREMOD_SIZE;
+		*(curdma++) = tablept[(fbb>>0)&1];		tablept += PREMOD_SIZE;  if( tablept == tableend ) tablept = tablestart;
+		*(curdma++) = tablept[(fbb>>3)&1];		tablept += PREMOD_SIZE;
+		*(curdma++) = tablept[(fbb>>2)&1];		tablept += PREMOD_SIZE;  if( tablept == tableend ) tablept = tablestart;
+		*(curdma++) = tablept[(fbb>>5)&1];		tablept += PREMOD_SIZE;
+		*(curdma++) = tablept[(fbb>>4)&1];		tablept += PREMOD_SIZE;  if( tablept == tableend ) tablept = tablestart;
+		*(curdma++) = tablept[(fbb>>7)&1];		tablept += PREMOD_SIZE;
+		*(curdma++) = tablept[(fbb>>6)&1];		tablept += PREMOD_SIZE;  if( tablept == tableend ) tablept = tablestart;
+	}
+	fillwith( LINE32LEN - (11+6+12+FBW/2), BLACK_LEVEL );
+
+
+/*	fillwith( FBW/8, BLACK_LEVEL );
+	fillwith( FBW/32, 1 );
+	fillwith( FBW/32, 2 );
+	fillwith( FBW/32, 3 );
+	fillwith( FBW/32, 4 );
+	fillwith( FBW/32, 5 );
+	fillwith( FBW/32, 6 );
+	fillwith( FBW/32, 7 );
+	fillwith( FBW/32, 14 );
+	fillwith( FBW/8, BLACK_LEVEL );
+	fillwith( LINE32LEN - (11+15+FBW/2), BLACK_LEVEL );
+*/
+	pixline++;
+}
+
+void (*CbTable[NTSC_LINES])();
 
 LOCAL void slc_isr(void) {
 	//portBASE_TYPE HPTaskAwoken=0;
 	struct sdio_queue *finishedDesc;
 	uint32 slc_intr_status;
-	int dummy, x;
+	int x;
 
 	//Grab int status
 	slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
@@ -109,31 +206,20 @@ LOCAL void slc_isr(void) {
 	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
 		//The DMA subsystem is done with this block: Push it on the queue so it can be re-used.
 		finishedDesc=(struct sdio_queue*)READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
-		struct sdio_queue * next = (struct sdio_queue *)finishedDesc->next_link_ptr;
-		uint32_t * b = (uint32_t*)next->buf_ptr;
-		if( next->unused == 2 )
+		uint16_t * startdma = curdma = (uint16_t*)finishedDesc->buf_ptr;
+
+		CbTable[gline]();
+
+		if( curdma != startdma + LINE16LEN )
+		{
+			printf( "Line %d handled wrong\n", gline );
+		}
+
+		gline++;
+		if( gline == NTSC_LINES )
 		{
 			gline = 0;
-		}
-		else if( next->unused == 3 )
-		{
-			gline = 0; gframe++;
-		}
-		else if( next->unused )
-		{
-			uint8_t pxm = 0;
-			uint8_t idx = 25;
-			uint8_t xt = 0;
-			uint8_t * f = &framebuffer[(FBW/8)*gline + ((FBW/8)*FBH)*(gframe&1)];
-			for( x = 0; x < 128/4; x++ )
-			{
-				uint8_t fx = f[x];
-				b[idx++] = RFmaps[ (fx>>0)&3 ];
-				b[idx++] = RFmaps[ (fx>>2)&3 ];
-				b[idx++] = RFmaps[ (fx>>4)&3 ];
-				b[idx++] = RFmaps[ (fx>>6)&3 ];
-			}
-			gline++;
+			gframe++;
 		}
 	}
 }
@@ -141,64 +227,62 @@ LOCAL void slc_isr(void) {
 //Initialize I2S subsystem for DMA circular buffer use
 void ICACHE_FLASH_ATTR testi2s_init() {
 	int x, y;
-		
-//	uint32_t i2sBD[I2SDMABUFLEN*LINETYPES];
+	
+	uint32_t endiantest[1] = { 0xAABBCCDD };
+	uint8_t * et = (uint8_t*)endiantest;
+	printf( "%02x %02x %02x %02x\n", et[0], et[1], et[2], et[3] );
 
-	redo_maps();
+
+	//Bits are shifted out
 
 	//Initialize DMA buffer descriptors in such a way that they will form a circular
 	//buffer.
-	for (x=0; x<NTSC_LINES; x++) {
+	for (x=0; x<DMABUFFERDEPTH; x++) {
 		i2sBufDesc[x].owner=1;
 		i2sBufDesc[x].eof=1;
 		i2sBufDesc[x].sub_sof=0;
 		i2sBufDesc[x].datalen=I2SDMABUFLEN*4;
 		i2sBufDesc[x].blocksize=I2SDMABUFLEN*4;
-//		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(x%2)*I2SDMABUFLEN];
+		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[x*I2SDMABUFLEN*2];
 		i2sBufDesc[x].unused=0;
-		i2sBufDesc[x].next_link_ptr=(int)((x<(NTSC_LINES-1))?(&i2sBufDesc[x+1]):(&i2sBufDesc[0]));
+		i2sBufDesc[x].next_link_ptr=(int)((x<(DMABUFFERDEPTH-1))?(&i2sBufDesc[x+1]):(&i2sBufDesc[0]));
 	}
 
+
+	//Setup the callback table.
 	for( x = 0; x < 3; x++ )
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_STA)*I2SDMABUFLEN];
+		CbTable[x] = FT_STA;
 	for( ; x < 6; x++ )
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_STB)*I2SDMABUFLEN];
+		CbTable[x] = FT_STB;
 	for( ; x < 9; x++ )
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_STA)*I2SDMABUFLEN];
-	for( ; x < 19; x++ )
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_B)*I2SDMABUFLEN];
-	i2sBufDesc[x-1].unused = 2;
-	for( ; x < 259; x++ )
-	{
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_LIN)*I2SDMABUFLEN];
-		i2sBufDesc[x].unused = 1;//x&1; //every other line
-	}
+		CbTable[x] = FT_STA;
+	for( ; x < 32; x++ )
+		CbTable[x] = FT_B;
+	for( ; x < 252; x++ )
+		CbTable[x] = FT_LIN;
 	for( ; x < 263; x++ )
-	{
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_B)*I2SDMABUFLEN];
-	}
+		CbTable[x] = FT_B;
 
 	//263rd frame, begin odd sync.
 	for( ; x < 266; x++ )
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_STA)*I2SDMABUFLEN];
-	i2sBufDesc[x++].buf_ptr=(uint32_t)&i2sBD[(FT_SRA)*I2SDMABUFLEN];
+		CbTable[x] = FT_STA;
+
+	CbTable[x++] = FT_SRA;
+
 	for( ; x < 269; x++ )
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_STB)*I2SDMABUFLEN];
-	i2sBufDesc[x++].buf_ptr=(uint32_t)&i2sBD[(FT_SRB)*I2SDMABUFLEN];
+		CbTable[x] = FT_STB;
+
+	CbTable[x++] = FT_SRB;
+
 	for( ; x < 272; x++ )
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_STA)*I2SDMABUFLEN];
-	for( ; x < 283; x++ )
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_B)*I2SDMABUFLEN];
-	i2sBufDesc[x-1].unused = 3;
-	for( ; x < 519; x++ )
-	{
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_LIN)*I2SDMABUFLEN];
-		i2sBufDesc[x].unused = 1;//x&1; //every other line
-	}
+		CbTable[x] = FT_STA;
+	for( ; x < 295; x++ )
+		CbTable[x] = FT_B;
+	for( ; x < 515; x++ )
+		CbTable[x] = FT_LIN;
 	for( ; x < NTSC_LINES; x++ )
-	{
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[(FT_B)*I2SDMABUFLEN];
-	}
+		CbTable[x] = FT_B;
+
 
 
 	//Reset DMA
@@ -300,6 +384,7 @@ void ICACHE_FLASH_ATTR testi2s_init() {
 
 
 void ICACHE_FLASH_ATTR redo_maps() {
+/*
 	int x, y;
 	//Create line types
 	uint32_t * l;
@@ -351,4 +436,5 @@ void ICACHE_FLASH_ATTR redo_maps() {
 	for (; x < 79; x++)				l[x]= BLACK_LEVEL;
 	for (; x < 1+79; x++)			l[x]= WHITE_LEVEL;
 	for (; x < I2SDMABUFLEN; x++)	l[x]= BLACK_LEVEL;
+*/
 }
