@@ -1,9 +1,9 @@
 #include <c_types.h>
 
-#define PREMOD_ENTRIES 88
-#define PREMOD_SIZE 16
-#define SYNC_LEVEL 15
-#define COLORBURST_LEVEL 14
+#define PREMOD_ENTRIES 44
+#define PREMOD_SIZE 18
+#define SYNC_LEVEL 17
+#define COLORBURST_LEVEL 16
 #define BLACK_LEVEL 0
-extern uint16_t premodulated_table[1408];
+extern const uint32_t premodulated_table[864];
 

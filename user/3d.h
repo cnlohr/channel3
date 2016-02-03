@@ -8,7 +8,6 @@
 #include "ntsc_broadcast.h"
 
 extern int gframe;
-extern uint8_t framebuffer[((FBW/8)*FBH)*2];
 extern uint8_t * frontframe;
 extern int16_t ProjectionMatrix[16];
 extern int16_t ModelviewMatrix[16];
@@ -20,7 +19,7 @@ extern uint8_t CNFGDialogColor; //background for boxes
 void CNFGTackSegment( int x0, int y0, int x1, int y1 );
 int LABS( int x );
 void CNFGTackPixel( int x, int y ); //Unsafe plot pixel.
-#define CNFGTackPixelFAST( x, y ) { frontframe[(x+y*FBW)>>3] |= 1<<(x&7); }
+#define CNFGTackPixelFAST( x, y ) { frontframe[(x+y*FBW)>>2] |= 2<<( (x&3)<<1 ); }  //Store in 4 bits per byte.
 void LocalToScreenspace( int16_t * coords_3v, int16_t * o1, int16_t * o2 );
 int16_t tdSIN( uint8_t iv );
 int16_t tdCOS( uint8_t iv );

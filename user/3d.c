@@ -222,11 +222,19 @@ void ICACHE_FLASH_ATTR LocalToScreenspace( int16_t * coords_3v, int16_t * o1, in
 
 void CNFGTackPixel( int x, int y )
 {
+
+/*
 	if( CNFGLastColor )
-		frontframe[(x+y*FBW)/8] |= 1<<(x&7);
+		frontframe[(x+y*FBW)>>4] |= 1<<(x&3);
 	else
-		frontframe[(x+y*FBW)/8] &= ~(1<<(x&7));
+		frontframe[(x+y*FBW)>>4] &= ~(1<<(x&3));
+*/
+	if( CNFGLastColor )
+		frontframe[(x+y*FBW)>>2] |= 2<<( (x&3)<<1 );
+	else
+		frontframe[(x+y*FBW)>>2] &= ~(2<<( (x&3)<<1 ));
 }
+
 
 int LABS( int x )
 {

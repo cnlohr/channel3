@@ -20,13 +20,14 @@
 #include <c_types.h>
 
 //Framebuffer width/height
-#define FBW 224 //Must be divisible by 8.
-#define FBH 220
+#define FBW 256 //Must be divisible by 8.  These are actually "double-pixels" used for double-resolution monochrome width.
+#define FBW2 (FBW/2) //Actual width in true pixels.
+#define FBH 232
 
 #define DMABUFFERDEPTH 3
 
 extern int gframe; //Current frame #
-extern uint8_t framebuffer[((FBW/8)*(FBH))*2]; //prevent overscan a bit.  (*2 = double buffer)
+extern uint8_t framebuffer[((FBW2/2)*(FBH))*2]; // /2 = two pixels per byte (*2 = double buffer)
 
 
 void ICACHE_FLASH_ATTR testi2s_init();

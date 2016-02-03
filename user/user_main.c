@@ -73,7 +73,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 	int newstate = showstate;
 	CNFGPenX = 14;
 	CNFGPenY = 20;
-	ets_memset( frontframe, 0, ((FBW/8)*FBH) );
+	ets_memset( frontframe, 0, ((FBW/4)*FBH) );
 	int16_t rt[16];
 	tdIdentity( ModelviewMatrix );
 	tdIdentity( ProjectionMatrix );
@@ -105,8 +105,8 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		tdRotateEA( ProjectionMatrix, -20, 0, 0 );
 		tdRotateEA( ModelviewMatrix, 0, 0, framessostate );
 
-		for( y = -18; y < 18; y++ )
-		for( x = -18; x < 18; x++ )
+		for( y = -20; y < 20; y++ )
+		for( x = -20; x < 20; x++ )
 		{
 			int o = -framessostate*2;
 			int t = Height( x, y, o )* 2 + 2000;
@@ -262,7 +262,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 
 	if( lastframe != tbuffer )
 	{
-		frontframe = &framebuffer[((FBW/8)*FBH)*tbuffer];
+		frontframe = &framebuffer[((FBW/4)*FBH)*tbuffer];
 		DrawFrame( frontframe );
 		lastframe = tbuffer;
 	}
