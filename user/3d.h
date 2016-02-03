@@ -25,8 +25,7 @@ int16_t tdSIN( uint8_t iv );
 int16_t tdCOS( uint8_t iv );
 
 /* Colors:
-    0:
-	15:
+    0 .. 15 = standard-density colors
 	16: Black, Double-Density
 	17: White, Double-Density
 */

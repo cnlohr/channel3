@@ -14,13 +14,27 @@
 
 double eps = 0.01; //Used to help resolve and prevent issues at 0.
 double NTSC_Frequency = 315.0/88.0;   //3.579545455 MHz
-double MODULATION_Frequency = 61.25;
+
+#define CHANNEL_2  55.22727272727  //Actually 55.25, but need to make it line up to the 1408 mark.
+#define CHANNEL_3  61.25 //Channel 3 works out perfectly.
+#define CHANNEL_4  67.272727273
+#define CHANNEL_5  77.25
+
+//To find precise frequency divisors... (1408/80)×67.25(nominal frequency) = 1183.6 ... round up.... 1184/(1408/80) = 67.272727273
+
+double MODULATION_Frequency = CHANNEL_3;
+
+
 double BIT_Frequency = 80.0;
 int samples = 1408;//+2; //+2 if you want to see   WARNING: This MUST be divisible by 32!
 int overshoot = 128; //4 words of overshoot (continue the table past the end so we don't have to keep checking to make sure it's ok)
 
 // I tried initially without this, but it causes an extra reflection around the main carrier.  Turns out it's cleaner just to modulate directly to the carrier+chroma frequency.  This flag enables that.
 #define DIRECT_CHROMA_CARRIER_SYNTHESIS
+
+
+//Whether you want the data transposed in the array or not.  It might be faster, but the ntsc_broadcast engine must be set to use transposed if it's set.
+#define TRANSPOSE
 
 //ChromaValue, LumaValue = 0...??? 
 //, ChromaShift, Luma are all 0..1
@@ -83,13 +97,13 @@ int main()
 //BLACK
 	WriteSignal( 1.0, 0.0, 0.85, 0.0, debug, &databuffer[stride*1], 0xffffffff );  //GRAY
 //BTW
-	WriteSignal( 0.5, 1.0, 0.8, 0.0, debug, &databuffer[stride*3], 0xffffffff ); 
-	WriteSignal( 0.5, 1.0, 0.8, 0.2, debug, &databuffer[stride*4], 0xffffffff ); 
-	WriteSignal( 0.5, 1.0, 0.8, 0.4, debug, &databuffer[stride*5], 0xffffffff ); 
-	WriteSignal( 0.5, 1.0, 0.8, 0.6, debug, &databuffer[stride*6], 0xffffffff ); 
-	WriteSignal( 0.5, 1.0, 0.8, 0.8, debug, &databuffer[stride*7], 0xffffffff ); 
+	WriteSignal( 0.7, 1.0, 0.9, 0.0, debug, &databuffer[stride*3], 0xffffffff ); 
+	WriteSignal( 0.7, 1.0, 0.9, 0.2, debug, &databuffer[stride*4], 0xffffffff ); 
+	WriteSignal( 0.7, 1.0, 0.9, 0.4, debug, &databuffer[stride*5], 0xffffffff ); 
+	WriteSignal( 0.7, 1.0, 0.9, 0.6, debug, &databuffer[stride*6], 0xffffffff ); 
+	WriteSignal( 0.7, 1.0, 0.9, 0.8, debug, &databuffer[stride*7], 0xffffffff ); 
 //WTB
-	WriteSignal( 0.5, 0.5, 1.2, 0.0, debug, &databuffer[stride*9], 0xffffffff ); 
+	WriteSignal( 0.4, 0.5, 0.5, 0.0, debug, &databuffer[stride*9], 0xffffffff ); 
 //WHITE
 	WriteSignal( 0.5, 0.5, 0.8, 0.0, debug, &databuffer[stride*11], 0xffffffff ); 
 	WriteSignal( 0.5, 0.5, 0.8, 0.2, debug, &databuffer[stride*12], 0xffffffff ); 
@@ -97,7 +111,7 @@ int main()
 	WriteSignal( 0.5, 0.5, 0.8, 0.6, debug, &databuffer[stride*14], 0xffffffff ); 
 	WriteSignal( 0.5, 0.5, 0.8, 0.8, debug, &databuffer[stride*15], 0xffffffff ); 
 
-	WriteSignal( 1.0, 0.15, 0.6, 0.0, debug, &databuffer[stride*16], 0xffffffff ); //Chroma.
+	WriteSignal( 1.2, 0.3, 0.6, 0.0, debug, &databuffer[stride*16], 0xffffffff ); //Chroma.
 	WriteSignal( 1.0, 0.0, 0.0, 0.0, debug, &databuffer[stride*17], 0xffffffff ); //Sync Tip.  //-16.3 db
 
 	FILE * f = fopen( "broadcast_tables.c", "w" );
@@ -107,8 +121,16 @@ int main()
 	{
 		int imod = i % TABLESIZE;
 		int idiv = i / TABLESIZE;
+
+//Transposition makes selecting colors easier, but more difficult to get stripes.  Need to test performance.
+
+#ifdef TRANSPOSE
 		//idiv ^= 1; //Invert rows... So we flip our bit orders.  This looks weird, but it fixes our order-of-text.
 		uint32_t val = databuffer[imod * stride + idiv];
+#else
+		uint32_t val = databuffer[i];
+#endif
+
 		if( imod == 0 ) { fprintf( f, "\n\t" ); }
 		fprintf( f, "0x%02x, ", (val) );
 	}
@@ -117,8 +139,14 @@ int main()
 
 	f = fopen( "broadcast_tables.h", "w" );
 	fprintf( f, "#include <c_types.h>\n\n" );
+	fprintf( f, "#include <mystuff.h>\n\n" );
+
 	fprintf( f, "#define PREMOD_ENTRIES %d\n", samples/32 );
+	fprintf( f, "#define PREMOD_ENTRIES_WITH_SPILL %d\n", (samples+overshoot)/32 );
 	fprintf( f, "#define PREMOD_SIZE %d\n", TABLESIZE );
+#ifdef TRANSPOSE
+	fprintf( f, "#define TRANSPOSE_MOD\n" );
+#endif
 	fprintf( f, "#define SYNC_LEVEL 17\n" );
 	fprintf( f, "#define COLORBURST_LEVEL 16\n" );
 	fprintf( f, "#define BLACK_LEVEL 0\n" );

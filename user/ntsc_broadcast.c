@@ -87,7 +87,11 @@ static int linescratch;
 uint8_t framebuffer[((FBW/4)*(FBH))*2];
 
 const uint32_t * tablestart = &premodulated_table[0];
+#ifdef TRANSPOSE_MOD
 const uint32_t * tablept = &premodulated_table[0];
+#else
+uint16_t tablept;
+#endif
 const uint32_t * tableend = &premodulated_table[PREMOD_ENTRIES*PREMOD_SIZE];
 uint32_t * curdma;
 
@@ -96,6 +100,23 @@ uint8_t pixline; //line number currently being written out.
 //Each "qty" is 32 bits, or .4us
 LOCAL void fillwith( uint16_t qty, uint8_t color )
 {
+#ifndef TRANSPOSE_MOD
+	const uint32_t * ptm = &premodulated_table[color*PREMOD_ENTRIES_WITH_SPILL + tablept];
+	while( qty )
+	{
+		int left = PREMOD_ENTRIES - tablept;
+		if( left < qty ) { qty -= left; }
+		else { left = qty; qty = 0; }
+		tablept += left;
+		while( left-- )
+			*(curdma++) = *(ptm++);
+		if( qty )
+		{
+			if( tablept == PREMOD_ENTRIES ) tablept = 0;
+			ptm = &premodulated_table[color*PREMOD_ENTRIES_WITH_SPILL + tablept];
+		}
+	}
+#else
 	if( qty & 1 )
 	{
 		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
@@ -107,6 +128,7 @@ LOCAL void fillwith( uint16_t qty, uint8_t color )
 		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
 		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
 	}
+#endif
 }
 
 
@@ -186,6 +208,22 @@ LOCAL void FT_LIN()
 #else
 	uint8_t * fbs = &framebuffer[(pixline * (FBW2/2)) + ( ((FBW2/2)*(FBH))*(fframe)) ];
 
+#ifndef TRANSPOSE_MOD
+	const uint32_t * ptm = &premodulated_table[tablept];
+	for( linescratch = 0; linescratch < FBW2/4; linescratch++ )
+	{
+		uint8_t fbb;
+		fbb = *(fbs++);
+		*(curdma++) = ptm[((fbb>>0)&15)*PREMOD_ENTRIES_WITH_SPILL];	ptm++;
+		*(curdma++) = ptm[((fbb>>4)&15)*PREMOD_ENTRIES_WITH_SPILL];	ptm++;
+		fbb = *(fbs++);
+		*(curdma++) = ptm[((fbb>>0)&15)*PREMOD_ENTRIES_WITH_SPILL];	ptm++;
+		*(curdma++) = ptm[((fbb>>4)&15)*PREMOD_ENTRIES_WITH_SPILL];	ptm++;
+		tablept += 4;
+		if( tablept >= PREMOD_ENTRIES ) { tablept = tablept - PREMOD_ENTRIES; ptm = &premodulated_table[tablept]; }
+		
+	}
+#else
 	for( linescratch = 0; linescratch < FBW2/4; linescratch++ )
 	{
 		uint8_t fbb;
@@ -197,6 +235,8 @@ LOCAL void FT_LIN()
 		*(curdma++) = tablept[(fbb>>4)&15];		tablept += PREMOD_SIZE;
 		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
 	}
+#endif
+
 	fillwith( LINE32LEN - (HDR_SPD+FBW2), BLACK_LEVEL );
 #endif
 
@@ -225,11 +265,12 @@ LOCAL void slc_isr(void) {
 
 		CbTable[gline]();
 
+#if 0
 		if( curdma != startdma + LINE32LEN )
 		{
 			printf( "Line %d handled wrong\n", gline );
 		}
-
+#endif
 		gline++;
 		if( gline == NTSC_LINES )
 		{
@@ -242,11 +283,12 @@ LOCAL void slc_isr(void) {
 //Initialize I2S subsystem for DMA circular buffer use
 void ICACHE_FLASH_ATTR testi2s_init() {
 	int x, y;
-	
+
+/*	
 	uint32_t endiantest[1] = { 0xAABBCCDD };
 	uint8_t * et = (uint8_t*)endiantest;
 	printf( "%02x %02x %02x %02x\n", et[0], et[1], et[2], et[3] );
-
+*/
 
 	//Bits are shifted out
 

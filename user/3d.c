@@ -25,6 +25,7 @@ int16_t ModelviewMatrix[16];
 int16_t ProjectionMatrix[16];
 uint8_t CNFGBGColor;
 uint8_t CNFGLastColor;
+uint16_t LTW = FBW;
 uint8_t CNFGDialogColor; //background for boxes
 
 
@@ -216,8 +217,18 @@ void ICACHE_FLASH_ATTR LocalToScreenspace( int16_t * coords_3v, int16_t * o1, in
 	td4Transform( tmppt, ModelviewMatrix, tmppt );
 	td4Transform( tmppt, ProjectionMatrix, tmppt );
 	if( tmppt[3] >= 0 ) { *o1 = -1; *o2 = -1; return; }
-	*o1 = (256 * tmppt[0] / tmppt[3])/8+(FBW/2);
-	*o2 = (256 * tmppt[1] / tmppt[3])/8+(FBH/2);
+
+	if( CNFGLastColor > 15 )
+	{
+		//Half-height mode
+		*o1 = (256 * tmppt[0] / tmppt[3])/8+(FBW/2);
+		*o2 = (256 * tmppt[1] / tmppt[3])/8+(FBH/2);
+	}
+	else
+	{
+		*o1 = ((256 * tmppt[0] / tmppt[3])/8+(FBW/2))/2;
+		*o2 = ((256 * tmppt[1] / tmppt[3])/8+(FBH/2));
+	}
 }
 
 void CNFGTackPixelW( int x, int y )
@@ -248,14 +259,17 @@ void CNFGColor( uint8_t col )
 	CNFGLastColor = col;
 	if( col == 16 )
 	{
+		LTW = FBW;
 		CNFGTackPixel = CNFGTackPixelB;
 	}
 	else if( col == 17 )
 	{
+		LTW = FBW;
 		CNFGTackPixel = CNFGTackPixelW;
 	}
 	else
 	{
+		LTW = FBW/2;
 		CNFGTackPixel = CNFGTackPixelG;
 	}
 }
@@ -276,9 +290,9 @@ void CNFGTackSegment( int x0, int y0, int x1, int y1 )
 	int ysg = (y0>y1)?-1:1;
 	int y = y0;
 
-	if( x0 < 0 || x0 >= FBW ) return;
+	if( x0 < 0 || x0 >= LTW ) return;
 	if( y0 < 0 || y0 >= FBH ) return;
-	if( x1 < 0 || x1 >= FBW ) return;
+	if( x1 < 0 || x1 >= LTW ) return;
 	if( y1 < 0 || y1 >= FBH ) return;
 
 	if( CNFGLastColor )

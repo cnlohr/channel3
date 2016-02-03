@@ -5,7 +5,8 @@
 #include "mystuff.h"
 #include "esp8266_rom.h"
 
-#define HTDEBUG( x... ) printf( x )
+//#define HTDEBUG( x... ) printf( x )
+#define HTDEBUG( x... )
 
 //#define ISKEEPALIVE "keep-alive"
 #define ISKEEPALIVE "close"
@@ -177,7 +178,7 @@ void HTTPTick( uint8_t timed )
 	uint8_t i;
 	for( i = 0; i < HTTP_CONNECTIONS; i++ )
 	{
-		if( curhttp ) { printf( "Unexpected Race Condition\n" );}
+		if( curhttp ) { HTDEBUG( "HTTPRXQ\n" ); break; }
 		curhttp = &HTTPConnections[i];
 		DoHTTP( timed );
 		curhttp = 0;

@@ -49,9 +49,9 @@ void ICACHE_FLASH_ATTR SetupMatrix( )
 	Perspective( 600, 250, 50, 8192, ProjectionMatrix );
 }
 
+ 
 
-
-#define INITIAL_SHOW_STATE 7
+#define INITIAL_SHOW_STATE 0
 
 extern int gframe;
 char lastct[256];
@@ -97,12 +97,28 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 			CNFGDrawText( "Hello", 3 );
 			CNFGTackRectangle( 120, (i+1)*12, 180, (i+1)*12+12);
 		}
-		
+
+		SetupMatrix();
+		tdRotateEA( ProjectionMatrix, -20, 0, 0 );
+		tdRotateEA( ModelviewMatrix, framessostate, 0, 0 );
+
+		for( y = 3; y >= 0; y-- )
+		for( x = 0; x < 4; x++ )
+		{
+			CNFGColor( x+y*4 );
+			ModelviewMatrix[11] = 1000 + tdSIN( (x + y)*40 + framessostate*2 );
+			ModelviewMatrix[3] = 600*x-850;
+			ModelviewMatrix[7] = 600*y+800 - 850;
+			DrawGeoSphere();
+		}
+
+
+		if( framessostate > 500 ) newstate = 9;
 	}
 		break;
 	case 9:
 	{
-		const char * s = "Direct modulation.\nDMA through the I2S Bus!\nTry it, yourself!\n\nhttp://github.com/cnlohr/\nchannel3\n";
+		const char * s = "Direct modulation.\nDMA through the I2S Bus!\nTry it yourself!\n\nhttp://github.com/cnlohr/\nchannel3\n";
 
 		i = ets_strlen( s );
 		if( i > framessostate ) i = framessostate;
@@ -125,6 +141,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		{
 			int o = -framessostate*2;
 			int t = Height( x, y, o )* 2 + 2000;
+			CNFGColor( ((t/100)%15) + 1 );
 			int nx = Height( x+1, y, o ) *2 + 2000;
 			int ny = Height( x, y+1, o ) * 2 + 2000;
 			//printf( "%d\n", t );
@@ -135,7 +152,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 			Draw3DSegment( p0, p2 );
 		}
 
-		if( framessostate > 400 ) newstate = 9;
+		if( framessostate > 400 ) newstate = 10;
 		break;
 	}
 	case 7:
@@ -171,7 +188,8 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		{
 			for( i = 0; i < 350; i++ )
 			{
-				CNFGTackSegment( rand()%FBW, rand()%(FBH-30)+30, rand()%FBW, rand()%(FBH-30)+30 );
+				CNFGColor( rand()%16 );
+				CNFGTackSegment( rand()%FBW2, rand()%(FBH-30)+30, rand()%FBW2, rand()%(FBH-30)+30 );
 			}
 		}
 		if( framessostate > 240 )
@@ -180,9 +198,9 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		}
 		break;
 	case 5:
-		ets_memcpy( frontframe, framessostate*(FBW/8)+0x3FFF8000, ((FBW/8)*FBH) );
+		ets_memcpy( frontframe, framessostate*(FBW/8)+0x3FFF8000, ((FBW/4)*FBH) );
 		CNFGColor( 17 );
-		CNFGTackRectangle( 70, 110, 180, 150 );		
+		CNFGTackRectangle( 70, 110, 180+200, 150 );		
 		CNFGColor( 16 );
 		if( framessostate > 160 ) newstate = 6;
 	case 4:
@@ -280,6 +298,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 	{
 		frontframe = &framebuffer[((FBW/4)*FBH)*tbuffer];
 		DrawFrame( frontframe );
+		//ets_memset( frontframe, 0xaa, ((FBW/4)*FBH) );
 		lastframe = tbuffer;
 	}
 
@@ -317,7 +336,7 @@ void ICACHE_FLASH_ATTR charrx( uint8_t c )
 	//Called from UART.
 }
 
-void user_init(void)
+void ICACHE_FLASH_ATTR user_init(void)
 {
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
 
