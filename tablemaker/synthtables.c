@@ -80,19 +80,23 @@ int main()
 	WriteSignal( 1.0, 0.0, 1.0, 0.0, debug, &databuffer[stride*8], 0x0000ffff ); //White
 	WriteSignal( 1.0, 0.0, 0.6, 0.0, debug, &databuffer[stride*8], 0xffff0000 ); //Black.  //-18.1 db
 	WriteSignal( 1.0, 0.0, 1.0, 0.0, debug, &databuffer[stride*10], 0xffffffff ); //White
+//BLACK
+	WriteSignal( 1.0, 0.0, 0.85, 0.0, debug, &databuffer[stride*1], 0xffffffff );  //GRAY
+//BTW
+	WriteSignal( 0.5, 1.0, 0.8, 0.0, debug, &databuffer[stride*3], 0xffffffff ); 
+	WriteSignal( 0.5, 1.0, 0.8, 0.2, debug, &databuffer[stride*4], 0xffffffff ); 
+	WriteSignal( 0.5, 1.0, 0.8, 0.4, debug, &databuffer[stride*5], 0xffffffff ); 
+	WriteSignal( 0.5, 1.0, 0.8, 0.6, debug, &databuffer[stride*6], 0xffffffff ); 
+	WriteSignal( 0.5, 1.0, 0.8, 0.8, debug, &databuffer[stride*7], 0xffffffff ); 
+//WTB
+	WriteSignal( 0.5, 0.5, 1.2, 0.0, debug, &databuffer[stride*9], 0xffffffff ); 
+//WHITE
+	WriteSignal( 0.5, 0.5, 0.8, 0.0, debug, &databuffer[stride*11], 0xffffffff ); 
+	WriteSignal( 0.5, 0.5, 0.8, 0.2, debug, &databuffer[stride*12], 0xffffffff ); 
+	WriteSignal( 0.5, 0.5, 0.8, 0.4, debug, &databuffer[stride*13], 0xffffffff ); 
+	WriteSignal( 0.5, 0.5, 0.8, 0.6, debug, &databuffer[stride*14], 0xffffffff ); 
+	WriteSignal( 0.5, 0.5, 0.8, 0.8, debug, &databuffer[stride*15], 0xffffffff ); 
 
-	WriteSignal( 1.0, 1.0, 0.8, 0.4, debug, &databuffer[stride*1], 0xffffffff ); 
-	WriteSignal( 1.0, 0.9, 0.8, 0.8, debug, &databuffer[stride*3], 0xffffffff ); 
-	WriteSignal( 1.0, 0.8, 0.8, 0.0, debug, &databuffer[stride*4], 0xffffffff ); 
-	WriteSignal( 0.5, 1.0, 0.8, 0.0, debug, &databuffer[stride*5], 0xffffffff ); 
-	WriteSignal( 1.0, 0.0, 0.8, 0.0, debug, &databuffer[stride*6], 0xffffffff ); 
-	WriteSignal( 1.0, 0.0, 0.9, 0.0, debug, &databuffer[stride*7], 0xffffffff ); 
-	WriteSignal( 1.0, 0.0, 0.9, 0.0, debug, &databuffer[stride*9], 0xffffffff );
-	WriteSignal( 1.0, 0.0, 0.9, 0.0, debug, &databuffer[stride*11], 0xffffffff );
-	WriteSignal( 1.0, 0.0, 0.9, 0.0, debug, &databuffer[stride*12], 0xffffffff );
-	WriteSignal( 1.0, 0.0, 0.9, 0.0, debug, &databuffer[stride*13], 0xffffffff );
-	WriteSignal( 1.0, 0.0, 0.9, 0.0, debug, &databuffer[stride*14], 0xffffffff );
-	WriteSignal( 1.0, 0.0, 0.9, 0.0, debug, &databuffer[stride*15], 0xffffffff );
 	WriteSignal( 1.0, 0.15, 0.6, 0.0, debug, &databuffer[stride*16], 0xffffffff ); //Chroma.
 	WriteSignal( 1.0, 0.0, 0.0, 0.0, debug, &databuffer[stride*17], 0xffffffff ); //Sync Tip.  //-16.3 db
 

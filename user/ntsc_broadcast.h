@@ -24,7 +24,7 @@
 #define FBW2 (FBW/2) //Actual width in true pixels.
 #define FBH 232
 
-#define DMABUFFERDEPTH 3
+#define DMABUFFERDEPTH 5
 
 extern int gframe; //Current frame #
 extern uint8_t framebuffer[((FBW2/2)*(FBH))*2]; // /2 = two pixels per byte (*2 = double buffer)

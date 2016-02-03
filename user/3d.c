@@ -220,21 +220,45 @@ void ICACHE_FLASH_ATTR LocalToScreenspace( int16_t * coords_3v, int16_t * o1, in
 	*o2 = (256 * tmppt[1] / tmppt[3])/8+(FBH/2);
 }
 
-void CNFGTackPixel( int x, int y )
+void CNFGTackPixelW( int x, int y )
 {
-
-/*
-	if( CNFGLastColor )
-		frontframe[(x+y*FBW)>>4] |= 1<<(x&3);
-	else
-		frontframe[(x+y*FBW)>>4] &= ~(1<<(x&3));
-*/
-	if( CNFGLastColor )
-		frontframe[(x+y*FBW)>>2] |= 2<<( (x&3)<<1 );
-	else
-		frontframe[(x+y*FBW)>>2] &= ~(2<<( (x&3)<<1 ));
+	frontframe[(x+y*FBW)>>2] |=   2<<( (x&3)<<1 );
 }
 
+void CNFGTackPixelB( int x, int y )
+{
+	frontframe[(x+y*FBW)>>2] &= ~(2<<( (x&3)<<1 ));
+}
+
+void CNFGTackPixelG( int x, int y )
+{
+	uint8_t * ffs = &frontframe[(x+y*FBW2)>>1];
+	if( x & 1 )
+	{
+		*ffs = (*ffs & 0x0f) | CNFGLastColor<<4;
+	}
+	else
+	{
+		*ffs = (*ffs & 0xf0 ) | CNFGLastColor;
+	}
+}
+
+void CNFGColor( uint8_t col )
+{
+	CNFGLastColor = col;
+	if( col == 16 )
+	{
+		CNFGTackPixel = CNFGTackPixelB;
+	}
+	else if( col == 17 )
+	{
+		CNFGTackPixel = CNFGTackPixelW;
+	}
+	else
+	{
+		CNFGTackPixel = CNFGTackPixelG;
+	}
+}
 
 int LABS( int x )
 {
@@ -263,12 +287,12 @@ void CNFGTackSegment( int x0, int y0, int x1, int y1 )
 		{
 			if( y1 == y0 )
 			{
-				CNFGTackPixelFAST( x1, y );
+				CNFGTackPixel( x1, y );
 				return;
 			}
 
 			for( ; y != y1+ysg; y+=ysg )
-				CNFGTackPixelFAST( x1, y );
+				CNFGTackPixel( x1, y );
 			return;
 		}
 
@@ -277,17 +301,17 @@ void CNFGTackSegment( int x0, int y0, int x1, int y1 )
 
 		for( x = x0; x != x1; x+=xsg )
 		{
-			CNFGTackPixelFAST(x,y);
+			CNFGTackPixel(x,y);
 			error = error + deltaerr;
 			while( error >= 128 && y >= 0 && y < FBH)
 			{
 				y = y + ysg;
-				CNFGTackPixelFAST(x, y);
+				CNFGTackPixel(x, y);
 				error = error - 256;
 			}
 		}
 
-		CNFGTackPixelFAST(x1,y1);
+		CNFGTackPixel(x1,y1);
 	}
 	else
 	{
@@ -593,7 +617,7 @@ void ICACHE_FLASH_ATTR CNFGTackRectangle( short x1, short y1, short x2, short y2
 
 	for( y = ly; y <= my; y++ )
 		for( x = lx; x <= mx; x++ )
-			CNFGTackPixel( x, y );
+			CNFGTackPixel( x>>1, y );
 }
 
 

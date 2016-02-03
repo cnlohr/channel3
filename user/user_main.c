@@ -52,6 +52,7 @@ void ICACHE_FLASH_ATTR SetupMatrix( )
 
 
 #define INITIAL_SHOW_STATE 7
+
 extern int gframe;
 char lastct[256];
 int showstate = INITIAL_SHOW_STATE;
@@ -77,7 +78,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 	int16_t rt[16];
 	tdIdentity( ModelviewMatrix );
 	tdIdentity( ProjectionMatrix );
-	CNFGColor( 1 );
+	CNFGColor( 17 );
 
 /*
 
@@ -85,6 +86,20 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 
 	switch( showstate )
 	{
+	case 10:
+	{
+		int i;
+		for( i = 0; i < 16; i++ )
+		{
+			CNFGPenX = 14;
+			CNFGPenY = (i+1) * 12;
+			CNFGColor( i );
+			CNFGDrawText( "Hello", 3 );
+			CNFGTackRectangle( 120, (i+1)*12, 180, (i+1)*12+12);
+		}
+		
+	}
+		break;
 	case 9:
 	{
 		const char * s = "Direct modulation.\nDMA through the I2S Bus!\nTry it, yourself!\n\nhttp://github.com/cnlohr/\nchannel3\n";
@@ -105,8 +120,8 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		tdRotateEA( ProjectionMatrix, -20, 0, 0 );
 		tdRotateEA( ModelviewMatrix, 0, 0, framessostate );
 
-		for( y = -20; y < 20; y++ )
-		for( x = -20; x < 20; x++ )
+		for( y = -18; y < 18; y++ )
+		for( x = -18; x < 18; x++ )
 		{
 			int o = -framessostate*2;
 			int t = Height( x, y, o )* 2 + 2000;
@@ -141,6 +156,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		for( y = -sphereset; y <= sphereset; y++ )
 		for( x = -sphereset; x <= sphereset; x++ )
 		{
+			if( y == 2 ) continue;
 			ModelviewMatrix[11] = 1000 + tdSIN( (x + y)*40 + framessostate*2 );
 			ModelviewMatrix[3] = 500*x;
 			ModelviewMatrix[7] = 500*y+800;
@@ -165,9 +181,9 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		break;
 	case 5:
 		ets_memcpy( frontframe, framessostate*(FBW/8)+0x3FFF8000, ((FBW/8)*FBH) );
-		CNFGColor( 1 );
+		CNFGColor( 17 );
 		CNFGTackRectangle( 70, 110, 180, 150 );		
-		CNFGColor( 0 );
+		CNFGColor( 16 );
 		if( framessostate > 160 ) newstate = 6;
 	case 4:
 		CNFGPenY += 14*7;

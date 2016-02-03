@@ -96,10 +96,16 @@ uint8_t pixline; //line number currently being written out.
 //Each "qty" is 32 bits, or .4us
 LOCAL void fillwith( uint16_t qty, uint8_t color )
 {
+	if( qty & 1 )
+	{
+		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
+	}
+	qty>>=1;
 	for( linescratch = 0; linescratch < qty; linescratch++ )
 	{
 		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
-		if( tablept == tableend ) tablept = tablestart;
+		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
+		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
 	}
 }
 
@@ -205,11 +211,14 @@ LOCAL void slc_isr(void) {
 	uint32 slc_intr_status;
 	int x;
 
-	//Grab int status
-	slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
-	//clear all intr flags
-	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);//slc_intr_status);
-	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
+	do
+	{
+		//Grab int status
+		slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
+		//clear all intr flags
+		WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);//slc_intr_status);
+		if (! (slc_intr_status & SLC_RX_EOF_INT_ST)) break;
+
 		//The DMA subsystem is done with this block: Push it on the queue so it can be re-used.
 		finishedDesc=(struct sdio_queue*)READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
 		uint32_t * startdma = curdma = (uint32_t*)finishedDesc->buf_ptr;
@@ -227,7 +236,7 @@ LOCAL void slc_isr(void) {
 			gline = 0;
 			gframe++;
 		}
-	}
+	} while(1);
 }
 
 //Initialize I2S subsystem for DMA circular buffer use
