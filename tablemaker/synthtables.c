@@ -26,15 +26,12 @@ double MODULATION_Frequency = CHANNEL_3;
 
 
 double BIT_Frequency = 80.0;
-int samples = 1408;//+2; //+2 if you want to see   WARNING: This MUST be divisible by 32!
-int overshoot = 128; //4 words of overshoot (continue the table past the end so we don't have to keep checking to make sure it's ok)
+int samples = 1408;//1408;//+2; //+2 if you want to see   WARNING: This MUST be divisible by 32!
+int overshoot = (32*7); //bits of overshoot (continue the table past the end so we don't have to keep checking to make sure it's ok)
 
 // I tried initially without this, but it causes an extra reflection around the main carrier.  Turns out it's cleaner just to modulate directly to the carrier+chroma frequency.  This flag enables that.
 #define DIRECT_CHROMA_CARRIER_SYNTHESIS
 
-
-//Whether you want the data transposed in the array or not.  It might be faster, but the ntsc_broadcast engine must be set to use transposed if it's set.
-#define TRANSPOSE
 
 //ChromaValue, LumaValue = 0...??? 
 //, ChromaShift, Luma are all 0..1
@@ -116,7 +113,7 @@ int main()
 
 	FILE * f = fopen( "broadcast_tables.c", "w" );
 	fprintf( f, "#include \"broadcast_tables.h\"\n\n" );
-	fprintf( f, "const uint32_t premodulated_table[%d] = {", stride * TABLESIZE );
+	fprintf( f, "uint32_t premodulated_table[%d] = {", stride * TABLESIZE );
 	for( i = 0; i < TABLESIZE*stride; i++ )
 	{
 		int imod = i % TABLESIZE;
@@ -124,12 +121,8 @@ int main()
 
 //Transposition makes selecting colors easier, but more difficult to get stripes.  Need to test performance.
 
-#ifdef TRANSPOSE
 		//idiv ^= 1; //Invert rows... So we flip our bit orders.  This looks weird, but it fixes our order-of-text.
 		uint32_t val = databuffer[imod * stride + idiv];
-#else
-		uint32_t val = databuffer[i];
-#endif
 
 		if( imod == 0 ) { fprintf( f, "\n\t" ); }
 		fprintf( f, "0x%02x, ", (val) );
@@ -144,13 +137,10 @@ int main()
 	fprintf( f, "#define PREMOD_ENTRIES %d\n", samples/32 );
 	fprintf( f, "#define PREMOD_ENTRIES_WITH_SPILL %d\n", (samples+overshoot)/32 );
 	fprintf( f, "#define PREMOD_SIZE %d\n", TABLESIZE );
-#ifdef TRANSPOSE
-	fprintf( f, "#define TRANSPOSE_MOD\n" );
-#endif
 	fprintf( f, "#define SYNC_LEVEL 17\n" );
 	fprintf( f, "#define COLORBURST_LEVEL 16\n" );
 	fprintf( f, "#define BLACK_LEVEL 0\n" );
-	fprintf( f, "extern const uint32_t premodulated_table[%d];\n\n", stride * TABLESIZE );
+	fprintf( f, "extern uint32_t premodulated_table[%d];\n\n", stride * TABLESIZE );
 	fclose( f );
 	
 	return 0;

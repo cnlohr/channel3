@@ -3,7 +3,7 @@
 This particular file may be licensed under the MIT/x11, New BSD or ColorChord Licenses. -->
 <head>
 <title>esp8266 channel 3 controller</title>
-<script language="javascript" type="text/javascript" src=jquery-2.1.4.min.js.gz></script>
+<script language="javascript" type="text/javascript" src=jquery-2.1.4.min.js></script>
 <script language="javascript" type="text/javascript" src=menuinterface.js></script>
 <script language="javascript" type="text/javascript" src=main.js></script>
 <meta charset="UTF-8">
@@ -39,12 +39,9 @@ td { vertical-align: top; }
 <tr><td width=1>
 <input type=submit onclick="ShowHideEvent( 'NTSC' ); KickNTSC();" value="NTSC"></td><td>
 <div id=NTSC class="collapsible">
+Enable Advance: <INPUT TYPE=checkbox id=EnableAdvance> Set Demo: <INPUT TYPE=text id=ScreenNumber> Jamb: <INPUT TYPE=text id=ScreenJamb value=-1> <INPUT TYPE=submit onclick="ntsc_set();"> 
 <TABLE>
-<TR><TD>Black</TD><TD><DIV id=CB0>...</DIV></TD><TD><INPUT id="d_0"><INPUT id="c_0"></TD></TR>
-<TR><TD>w-t-b</TD><TD><DIV id=CB1>...</DIV></TD><TD><INPUT id="d_1"><INPUT id="c_1"></TD></TR>
-<TR><TD>b-t-w</TD><TD><DIV id=CB2>...</DIV></TD><TD><INPUT id="d_2"><INPUT id="c_2"></TD></TR>
-<TR><TD>White</TD><TD><DIV id=CB3>...</DIV></TD><TD><INPUT id="d_3"><INPUT id="c_3"></TD></TR>
-<TR><TD>Sync</TD><TD><DIV id=CB4>...</DIV></TD><TD><INPUT id="d_4"><INPUT id="c_4"></TD></TR>
+<TR><TD>Test</TD></TR>
 </TABLE>
 </div></td></tr>
 

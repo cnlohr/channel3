@@ -5,9 +5,9 @@ all : $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
 
 
 SRCS:=driver/uart.c \
+	common/http.c \
 	common/mystuff.c \
 	common/flash_rewriter.c \
-	common/http.c \
 	common/commonservices.c \
 	common/http_custom.c \
 	common/mdns.c \
@@ -16,7 +16,8 @@ SRCS:=driver/uart.c \
 	user/ntsc_broadcast.c \
 	user/user_main.c \
 	user/3d.c \
-	tablemaker/broadcast_tables.c
+	tablemaker/broadcast_tables.c \
+	tablemaker/CbTable.c
 
 GCC_FOLDER:=~/esp8266/esp-open-sdk/xtensa-lx106-elf
 ESPTOOL_PY:=~/esp8266/esptool/esptool.py
@@ -33,25 +34,26 @@ CC:=$(PREFIX)gcc
 
 CFLAGS:=-mlongcalls -I$(SDK)/include -Imyclib -Iinclude -Iuser -Os -I$(SDK)/include/ -Icommon -DICACHE_FLASH
 
-#	   \
-#
+#	-Wl,--gc-sections \
+#	-Wl,--relax  \
+#	-flto \
 
 LDFLAGS_CORE:=\
 	-nostdlib \
-	-Wl,--relax -Wl,--gc-sections \
 	-L$(XTLIB) \
 	-L$(XTGCCLIB) \
+	-g \
+	$(SDK)/lib/libmain.a \
+	$(SDK)/lib/libpp.a \
+	$(SDK)/lib/libnet80211.a \
+	$(SDK)/lib/libwpa.a \
 	$(SDK)/lib/liblwip.a \
 	$(SDK)/lib/libssl.a \
 	$(SDK)/lib/libupgrade.a \
 	$(SDK)/lib/libnet80211.a \
 	$(SDK)/lib/liblwip.a \
-	$(SDK)/lib/libwpa.a \
-	$(SDK)/lib/libnet80211.a \
 	$(SDK)/lib/libphy.a \
 	$(SDK)/lib/libcrypto.a \
-	$(SDK)/lib/libmain.a \
-	$(SDK)/lib/libpp.a \
 	$(XTGCCLIB) \
 	-T $(SDK)/ld/eagle.app.v6.ld
 
@@ -63,9 +65,9 @@ LINKFLAGS:= \
 #	$(PREFIX)ld $^ $(LDFLAGS) -o $@
 
 $(TARGET_OUT) : $(SRCS)
-	$(PREFIX)gcc $(CFLAGS) $^  -flto $(LINKFLAGS) -o $@
-
-
+	$(PREFIX)gcc $(CFLAGS) $^  $(LINKFLAGS) -o $@
+	nm -S -n $(TARGET_OUT) > image.map
+	$(PREFIX)objdump -S $@ > image.lst
 
 $(FW_FILE_1): $(TARGET_OUT)
 	@echo "FW $@"

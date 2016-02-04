@@ -60,6 +60,7 @@ Extra copyright info:
 #define NTSC_LINES 525
 #define LINETYPES 6
 
+int8_t jam_color = -1; 
 
 //WS_I2S_DIV - if 1 will actually be 2.  Can't be less than 2.
 
@@ -74,7 +75,7 @@ Extra copyright info:
 
 //I2S DMA buffer descriptors
 static struct sdio_queue i2sBufDesc[DMABUFFERDEPTH];
-uint16_t i2sBD[I2SDMABUFLEN*DMABUFFERDEPTH*2];
+uint32_t i2sBD[I2SDMABUFLEN*DMABUFFERDEPTH];
 
 //Queue which contains empty DMA buffers
 
@@ -84,14 +85,10 @@ uint16_t i2sBD[I2SDMABUFLEN*DMABUFFERDEPTH*2];
 int gline = 0;
 int gframe = 0;
 static int linescratch;
-uint8_t framebuffer[((FBW/4)*(FBH))*2];
+uint16_t framebuffer[((FBW2/4)*(FBH))*2];
 
 const uint32_t * tablestart = &premodulated_table[0];
-#ifdef TRANSPOSE_MOD
 const uint32_t * tablept = &premodulated_table[0];
-#else
-uint16_t tablept;
-#endif
 const uint32_t * tableend = &premodulated_table[PREMOD_ENTRIES*PREMOD_SIZE];
 uint32_t * curdma;
 
@@ -100,23 +97,8 @@ uint8_t pixline; //line number currently being written out.
 //Each "qty" is 32 bits, or .4us
 LOCAL void fillwith( uint16_t qty, uint8_t color )
 {
-#ifndef TRANSPOSE_MOD
-	const uint32_t * ptm = &premodulated_table[color*PREMOD_ENTRIES_WITH_SPILL + tablept];
-	while( qty )
-	{
-		int left = PREMOD_ENTRIES - tablept;
-		if( left < qty ) { qty -= left; }
-		else { left = qty; qty = 0; }
-		tablept += left;
-		while( left-- )
-			*(curdma++) = *(ptm++);
-		if( qty )
-		{
-			if( tablept == PREMOD_ENTRIES ) tablept = 0;
-			ptm = &premodulated_table[color*PREMOD_ENTRIES_WITH_SPILL + tablept];
-		}
-	}
-#else
+//	return;
+	//We're using this one.
 	if( qty & 1 )
 	{
 		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
@@ -128,7 +110,6 @@ LOCAL void fillwith( uint16_t qty, uint8_t color )
 		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
 		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
 	}
-#endif
 }
 
 
@@ -183,8 +164,8 @@ LOCAL void FT_LIN()
 	fillwith( 12, SYNC_LEVEL );
 	fillwith( 1, BLACK_LEVEL );
 	fillwith( 7, COLORBURST_LEVEL );
-	fillwith( 5, BLACK_LEVEL );
-#define HDR_SPD (12+1+7+5)
+	fillwith( 11, BLACK_LEVEL );
+#define HDR_SPD (12+1+7+11)
 
 	int fframe = gframe & 1;
 //#define FILLTEST
@@ -206,36 +187,18 @@ LOCAL void FT_LIN()
 	fillwith( LINE32LEN - (HDR_SPD+FBW/2), BLACK_LEVEL );
 
 #else
-	uint8_t * fbs = &framebuffer[(pixline * (FBW2/2)) + ( ((FBW2/2)*(FBH))*(fframe)) ];
+	uint16_t * fbs = (uint16_t*)(&framebuffer[ ( (pixline * (FBW2/2)) + ( ((FBW2/2)*(FBH))*(fframe)) ) / 2 ]);
 
-#ifndef TRANSPOSE_MOD
-	const uint32_t * ptm = &premodulated_table[tablept];
 	for( linescratch = 0; linescratch < FBW2/4; linescratch++ )
 	{
-		uint8_t fbb;
-		fbb = *(fbs++);
-		*(curdma++) = ptm[((fbb>>0)&15)*PREMOD_ENTRIES_WITH_SPILL];	ptm++;
-		*(curdma++) = ptm[((fbb>>4)&15)*PREMOD_ENTRIES_WITH_SPILL];	ptm++;
-		fbb = *(fbs++);
-		*(curdma++) = ptm[((fbb>>0)&15)*PREMOD_ENTRIES_WITH_SPILL];	ptm++;
-		*(curdma++) = ptm[((fbb>>4)&15)*PREMOD_ENTRIES_WITH_SPILL];	ptm++;
-		tablept += 4;
-		if( tablept >= PREMOD_ENTRIES ) { tablept = tablept - PREMOD_ENTRIES; ptm = &premodulated_table[tablept]; }
-		
-	}
-#else
-	for( linescratch = 0; linescratch < FBW2/4; linescratch++ )
-	{
-		uint8_t fbb;
-		fbb = *(fbs++);
+		uint16_t fbb;
+		fbb = fbs[linescratch];
 		*(curdma++) = tablept[(fbb>>0)&15];		tablept += PREMOD_SIZE;
 		*(curdma++) = tablept[(fbb>>4)&15];		tablept += PREMOD_SIZE;
-		fbb = *(fbs++);
-		*(curdma++) = tablept[(fbb>>0)&15];		tablept += PREMOD_SIZE;
-		*(curdma++) = tablept[(fbb>>4)&15];		tablept += PREMOD_SIZE;
+		*(curdma++) = tablept[(fbb>>8)&15];		tablept += PREMOD_SIZE;
+		*(curdma++) = tablept[(fbb>>12)&15];	tablept += PREMOD_SIZE;
 		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
 	}
-#endif
 
 	fillwith( LINE32LEN - (HDR_SPD+FBW2), BLACK_LEVEL );
 #endif
@@ -243,7 +206,26 @@ LOCAL void FT_LIN()
 	pixline++;
 }
 
-void (*CbTable[NTSC_LINES])();
+static uint32_t systimex = 0;
+static uint32_t systimein = 0;
+uint32_t last_internal_frametime;
+LOCAL void FT_CLOSE_M()
+{
+	fillwith( 12, SYNC_LEVEL );
+	fillwith( 2, BLACK_LEVEL );
+	fillwith( 4, COLORBURST_LEVEL );
+	fillwith( LINE32LEN-12-6, BLACK_LEVEL );
+	gline = -1;
+	gframe++;
+
+	last_internal_frametime = systimex;
+	systimex = 0;
+	systimein = system_get_time();
+}
+
+#include "../tablemaker/CbTable.h" 
+
+void (*CbTable[FT_MAX_d])() = { FT_STA, FT_STB, FT_B, FT_SRA, FT_SRB, FT_LIN, FT_CLOSE_M };
 
 LOCAL void slc_isr(void) {
 	//portBASE_TYPE HPTaskAwoken=0;
@@ -251,39 +233,42 @@ LOCAL void slc_isr(void) {
 	uint32 slc_intr_status;
 	int x;
 
-	do
+	slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
+	//clear all intr flags
+	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);//slc_intr_status);
+	if ( (slc_intr_status & SLC_RX_EOF_INT_ST))
 	{
-		//Grab int status
-		slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
-		//clear all intr flags
-		WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);//slc_intr_status);
-		if (! (slc_intr_status & SLC_RX_EOF_INT_ST)) break;
-
 		//The DMA subsystem is done with this block: Push it on the queue so it can be re-used.
 		finishedDesc=(struct sdio_queue*)READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
-		uint32_t * startdma = curdma = (uint32_t*)finishedDesc->buf_ptr;
+		curdma = (uint32_t*)finishedDesc->buf_ptr;
 
-		CbTable[gline]();
-
-#if 0
-		if( curdma != startdma + LINE32LEN )
+		//Allow signal jamming, useful for testing output.
+		if( jam_color < 0 )
 		{
-			printf( "Line %d handled wrong\n", gline );
+			//*startdma = premodulated_table[0];
+			int lk = 0;
+			if( gline & 1 )
+				lk = (CbLookup[gline>>1]>>4)&0x0f;
+			else
+				lk = CbLookup[gline>>1]&0x0f;
+	
+			systimein = system_get_time();
+			CbTable[lk]();
+			systimex += system_get_time() - systimein;
+			gline++;
 		}
-#endif
-		gline++;
-		if( gline == NTSC_LINES )
+		else
 		{
-			gline = 0;
-			gframe++;
+			fillwith( LINE32LEN, jam_color );
 		}
-	} while(1);
+	}
 }
 
 //Initialize I2S subsystem for DMA circular buffer use
 void ICACHE_FLASH_ATTR testi2s_init() {
-	int x, y;
+	int x = 0, y;
 
+	jam_color = -1;
 /*	
 	uint32_t endiantest[1] = { 0xAABBCCDD };
 	uint8_t * et = (uint8_t*)endiantest;
@@ -300,46 +285,10 @@ void ICACHE_FLASH_ATTR testi2s_init() {
 		i2sBufDesc[x].sub_sof=0;
 		i2sBufDesc[x].datalen=I2SDMABUFLEN*4;
 		i2sBufDesc[x].blocksize=I2SDMABUFLEN*4;
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[x*I2SDMABUFLEN*2];
+		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBD[x*I2SDMABUFLEN];
 		i2sBufDesc[x].unused=0;
 		i2sBufDesc[x].next_link_ptr=(int)((x<(DMABUFFERDEPTH-1))?(&i2sBufDesc[x+1]):(&i2sBufDesc[0]));
 	}
-
-
-	//Setup the callback table.
-	for( x = 0; x < 3; x++ )
-		CbTable[x] = FT_STA;
-	for( ; x < 6; x++ )
-		CbTable[x] = FT_STB;
-	for( ; x < 9; x++ )
-		CbTable[x] = FT_STA;
-	for( ; x < 24; x++ )
-		CbTable[x] = FT_B;
-	for( ; x < 256; x++ )
-		CbTable[x] = FT_LIN;
-	for( ; x < 263; x++ )
-		CbTable[x] = FT_B;
-
-	//263rd frame, begin odd sync.
-	for( ; x < 266; x++ )
-		CbTable[x] = FT_STA;
-
-	CbTable[x++] = FT_SRA;
-
-	for( ; x < 269; x++ )
-		CbTable[x] = FT_STB;
-
-	CbTable[x++] = FT_SRB;
-
-	for( ; x < 272; x++ )
-		CbTable[x] = FT_STA;
-	for( ; x < 288; x++ )
-		CbTable[x] = FT_B;
-	for( ; x < 519; x++ )
-		CbTable[x] = FT_LIN;
-	for( ; x < NTSC_LINES; x++ )
-		CbTable[x] = FT_B;
-
 
 
 	//Reset DMA
@@ -439,59 +388,3 @@ void ICACHE_FLASH_ATTR testi2s_init() {
 }
 
 
-
-void ICACHE_FLASH_ATTR redo_maps() {
-/*
-	int x, y;
-	//Create line types
-	uint32_t * l;
-
-	//Each X is in units of 0.4us.  Each line is 158-159t or H=63.5555 long.
-	for( x = 0; x < sizeof( framebuffer ); x++ )
-	{
-		framebuffer[x] = rand();
-	}
-
-	//Line type 0: Even field synctype A.
-	y = FT_STA;	l = &i2sBD[y*I2SDMABUFLEN];	x = 0; 
-	for (; x < 6; x++)				l[x]= SYNC_LEVEL;
-	for (; x < 79; x++)				l[x]= BLACK_LEVEL;
-	for (; x < 6+79; x++)			l[x]= SYNC_LEVEL;
-	for (; x < I2SDMABUFLEN; x++)	l[x]= BLACK_LEVEL;
-
-	//Line type 1: Even field Synchtype B.
-	y = FT_STB;	l = &i2sBD[y*I2SDMABUFLEN];	x = 0; 
-	for (; x < 68; x++)				l[x]= SYNC_LEVEL;
-	for (; x < 79; x++)				l[x]= BLACK_LEVEL;
-	for (; x < 68+79; x++)			l[x]= SYNC_LEVEL;
-	for (; x < I2SDMABUFLEN; x++)	l[x]= BLACK_LEVEL;
-
-	//Line type 2: Black.
-	y = FT_B;	l = &i2sBD[y*I2SDMABUFLEN];	x = 0; 
-	for (; x < 12; x++)				l[x]= SYNC_LEVEL;
-	for (; x < I2SDMABUFLEN; x++)	l[x]= BLACK_LEVEL;
-
-	//Odd fields 
-
-	//Line type 3: Flippy odd field type
-	y = FT_SRA;	l = &i2sBD[y*I2SDMABUFLEN];	x = 0; 
-	for (; x < 6; x++)				l[x]= SYNC_LEVEL;
-	for (; x < 79; x++)				l[x]= BLACK_LEVEL;
-	for (; x < 68+79; x++)			l[x]= SYNC_LEVEL;
-	for (; x < I2SDMABUFLEN; x++)	l[x]= BLACK_LEVEL;
-
-	//Line type 4: Flippy odd field type B
-	y = FT_SRB;	l = &i2sBD[y*I2SDMABUFLEN];	x = 0; 
-	for (; x < 68; x++)				l[x]= SYNC_LEVEL;
-	for (; x < 79; x++)				l[x]= BLACK_LEVEL;
-	for (; x < 6+79; x++)			l[x]= SYNC_LEVEL;
-	for (; x < I2SDMABUFLEN; x++)	l[x]= BLACK_LEVEL;
-
-	//Line type 5: Line
-	y = FT_LIN;	l = &i2sBD[y*I2SDMABUFLEN];	x = 0; 
-	for (; x < 11; x++)				l[x]= SYNC_LEVEL;
-	for (; x < 79; x++)				l[x]= BLACK_LEVEL;
-	for (; x < 1+79; x++)			l[x]= WHITE_LEVEL;
-	for (; x < I2SDMABUFLEN; x++)	l[x]= BLACK_LEVEL;
-*/
-}

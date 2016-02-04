@@ -19,17 +19,17 @@ function LoadNTSC()
 {
 	for( var i = 0; i < 5; i++ )
 	{
-		CBs = "";
+/*		CBs = "";
 		for( var k = 0; k < 32; k++ )
 		{
 			CBs += "<INPUT TYPE=checkbox ID=ntcb" + i + "_" + k + ">";
 		}
-		$( "#CB" + i ).html( CBs );
+		$( "#CB" + i ).html( CBs );*/
 	}
 	KickNTSC();
 }
 
-function GotNTSC(req,data)
+/*function GotNTSC(req,data)
 {
 	var vs = data.split( ":" );
 	for( var i = 0; i < 5; i++ )
@@ -68,16 +68,26 @@ function GotNTSCDefault(req,data)
 	}
 	NTSCDataTicker();
 } 
+*/
+
+function ntsc_set()
+{
+	CVSet = "CO ";
+	CVSet += tohex8( Number($("#ScreenNumber").val()) );
+	CVSet += tohex8( $("#EnableAdvance").prop('checked')?1:0 );
+	CVSet += tohex8( Number($("#ScreenJamb").val()) );
+	QueueOperation( CVSet, null );
+}
 
 
 function NTSCDataTicker()
 {
 	if( IsTabOpen('NTSC') )
 	{
-		QueueOperation( "CG",  GotNTSC );
+		//QueueOperation( "CG",  GotNTSC );
 
 		is_ntsc_running = true;
-		var pushchanges = false;
+/*		var pushchanges = false;
 		var scmd = "CS:";
 
 		for( i = 0; i < 5; i++ )
@@ -113,6 +123,7 @@ function NTSCDataTicker()
 			console.log( scmd );
 			QueueOperation( scmd,  NTSCDataTicker );
 		}
+*/
 	}
 	else
 	{
@@ -121,7 +132,6 @@ function NTSCDataTicker()
 	//$( "#LEDPauseButton" ).css( "background-color", (is_leds_running&&!pause_led)?"green":"red" );
 
 }
-
 
 
 

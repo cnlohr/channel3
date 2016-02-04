@@ -55,7 +55,8 @@ void ICACHE_FLASH_ATTR SetupMatrix( )
 
 extern int gframe;
 char lastct[256];
-int showstate = INITIAL_SHOW_STATE;
+uint8_t showstate = INITIAL_SHOW_STATE;
+uint8_t showallowadvance = 1;
 int framessostate = 0;
 int showtemp = 0;
 
@@ -74,7 +75,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 	int newstate = showstate;
 	CNFGPenX = 14;
 	CNFGPenY = 20;
-	ets_memset( frontframe, 0, ((FBW/4)*FBH) );
+	ets_memset( frontframe, 0x00, ((FBW/4)*FBH) );
 	int16_t rt[16];
 	tdIdentity( ModelviewMatrix );
 	tdIdentity( ProjectionMatrix );
@@ -254,15 +255,18 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		lastct[i-framessostate] = 0;
 		if( i-framessostate == 1 ) newstate = 2;
 	case 0:
+	{
+		int stat = wifi_station_get_connect_status();
+
 		CNFGDrawText( lastct, 2 );
 
 		int rssi = wifi_station_get_rssi();
 		uint16 sysadc = system_adc_read();
-		ctx += ets_sprintf( ctx, "Channel 3 Broadcasting.\nframe: %d\nrssi: %d\nadc:   %d\n", gframe, rssi,sysadc );
+		ctx += ets_sprintf( ctx, "Channel 3 Broadcasting.\nframe: %d\nrssi: %d\nadc:  %d\nsstat:%d\n", gframe, rssi,sysadc, stat );
 		struct station_config wcfg;
 		struct ip_info ipi;
 		wifi_get_ip_info(0, &ipi);
-		if( ipi.ip.addr )
+		if( ipi.ip.addr || stat == 255 )
 		{
 			ctx += ets_sprintf( ctx, "IP: %d.%d.%d.%d\n", (ipi.ip.addr>>0)&0xff,(ipi.ip.addr>>8)&0xff,(ipi.ip.addr>>16)&0xff,(ipi.ip.addr>>24)&0xff );
 			ctx += ets_sprintf( ctx, "NM: %d.%d.%d.%d\n", (ipi.netmask.addr>>0)&0xff,(ipi.netmask.addr>>8)&0xff,(ipi.netmask.addr>>16)&0xff,(ipi.netmask.addr>>24)&0xff );
@@ -271,10 +275,11 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 			if( showtemp == 30 ) newstate = 1;
 		}
 		break;
+	}
 
 	}
 
-	if( showstate != newstate )
+	if( showstate != newstate && showallowadvance )
 	{
 		showstate = newstate;
 		framessostate = 0;
@@ -296,10 +301,13 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 
 	if( lastframe != tbuffer )
 	{
-		frontframe = &framebuffer[((FBW/4)*FBH)*tbuffer];
+		//printf( "FT: %d - ", last_internal_frametime );
+		uint32_t tft = system_get_time();
+		frontframe = (uint8_t*)&framebuffer[((FBW2/4)*FBH)*tbuffer];
 		DrawFrame( frontframe );
 		//ets_memset( frontframe, 0xaa, ((FBW/4)*FBH) );
 		lastframe = tbuffer;
+		//printf( "%d\n", system_get_time() - tft );
 	}
 
 	system_os_post(procTaskPrio, 0, 0 );
