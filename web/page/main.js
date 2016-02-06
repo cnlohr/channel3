@@ -16,11 +16,13 @@ lastencs = [];
 ntscloaded = false;
 var programs = [];
 
+var last_custom_program_data;
+var last_custom_program_color;
 //Utility functions for the inner scripts:
 
-var DefaultCode = "color = 5;\nvar freq1 = 10;\nvar power1 = 0.5;\nvar freq2 = 15;\nvar power2 = 1.0;\nfor( var i = 0; i < nrsamps; i++ ) {\n  \
+var DefaultCode = "color = 5;\nvar freq1 = 61.25;\nvar power1 = 1.0;\nvar phase = 0.1;\nvar freq2 = freq1 + 315.0/88.0;\nvar power2 = 1.0;\nfor( var i = 0; i < nrsamps; i++ ) {\n  \
 var ev = Math.sin(i*6.283185 * freq1 / spsout )*power1;\n  \
-ev += Math.sin(i*6.283185 * freq2 / spsout )*power2;\n  \
+ev += Math.sin(i*6.283185 * freq2 / spsout + phase*6.283185 )*power2;\n  \
 sampout[i] = ev;\n  \
 sampout[i] = (sampout[i]>0.5)?1:-1;\n\
 }\n\
@@ -52,7 +54,7 @@ function MakeProgram( KexecCode )
 		k.msg = '';\n\
 		k.sampout = [];\n\
 		k.dft = [];\n\
-		k.dftmax = dftmax\n\
+		k.dftmax = -1.0\n\
 		if( cansend ) { \n\
 			try {\n\
 				Kexec(); \n\
@@ -199,15 +201,51 @@ function NTSCGotMessage(e) {
 	ctx.strokeStyle="#ff0000";
 	ctx.setLineDash([0]);
 
-
+	last_custom_program_data = e.data.sampout;
+	last_custom_program_color =  e.data.color;
 	//Fix 'Upload' button.
 	$("#UploadColor").val( "Upload Col " + e.data.color );
 	$("#UploadColor").prop("disabled", false );
 	UpdateDFTRange();
 }
 
+function CVSSetResp( e )
+{
+	//console.log( e );
+}
+
 function UploadColorFunc( e )
 {
+	console.log( "Uploading " + last_custom_program_color );
+
+	//last_custom_program_data
+ 
+	if( last_custom_program_color >= 0 )
+	{
+		var CVSet = "CV " + tohex8( last_custom_program_color );
+		var lwords = last_custom_program_data.length/8;
+		var i;
+		var place = 0;
+		//console.log( "LWords: " + lwords );
+		for( i = 0; i < lwords; i++ )
+		{
+			var lvword = 0;
+			for( var k = 7; k >= 0; k-- )
+			{
+				var p = last_custom_program_data[place++];
+				lvword |= ( p > 0 )?(1<<k):0;
+			}
+			CVSet += tohex8( lvword );
+		}
+
+		//console.log( "Sending: " + CVSet );
+		QueueOperation( CVSet, CVSSetResp );
+	}
+//	CVSet = "CO ";
+//	CVSet += tohex8( Number($("#ScreenNumber").val()) );
+//	CVSet += tohex8( $("#EnableAdvance").prop('checked')?1:0 );
+//	CVSet += tohex8( Number($("#ScreenJamb").val()) );
+//	QueueOperation( CVSet, null );
 }
 
 
@@ -284,7 +322,7 @@ function UpdateOptionArray()
 
 function SaveNTSCProgram()
 {
-	console.log(  );
+
 	var sn = $("#NTSCSaveName").val();
 	var sp = $("#NTSCprogram").val();
 
@@ -316,10 +354,10 @@ function LoadNTSC()
 {
 	NTSCCanvas = document.getElementById("FTCanvas");
 
-	//Uncomment this to clear saved programs.
-
-	if( typeof( localStorage.ntprograms ) == "undefined" )
+	//	set localStorage.ntprograms = "" to force a flush.
+	if( typeof( localStorage.ntprograms ) == "undefined" || localStorage.ntprograms == null || localStorage.ntprograms.length < 1 )
 	{
+		console.log( "No ntprograms.  Initializing." );
 		programs = [];
 		pgm = {};
 		pgm.nam = "Col5Def";
