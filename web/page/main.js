@@ -121,7 +121,7 @@ function NTSCGotMessage(e) {
 	//  .rangeh = 66.6
 	var rangebot = 16;
 	var rangeleft = 0;
-
+	var dbscale = $("#usedbscale").prop('checked');
 	var w = NTSCCanvas.width-1-rangeleft;
 	var h = NTSCCanvas.height-1;
 	var rl = e.data.rangel;
@@ -201,7 +201,9 @@ function NTSCGotMessage(e) {
 	{
 		var bp = dftp / dft.length;
 		var pos = bp * w;
-		var y = (1.0-(dft[dftp]/dftmax)) * (h-rangebot);
+		var val = dft[dftp]/dftmax;
+		if( dbscale ) val = (Math.log( dft[dftp] )+8)/8.0;
+		var y = (1.0-(val)) * (h-rangebot);
 		if( y > (h-rangebot) ) y = (h-rangebot);
 		if( dftp == 0 )
 			ctx.moveTo(0+rangeleft,y);
