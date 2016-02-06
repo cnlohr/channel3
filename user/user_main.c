@@ -96,7 +96,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 			x *= (FBW/4);
 			y *= (FBH/4);
 			CNFGColor( i );
-			CNFGTackRectangle( x, y, x+(FBW/4), y+(FBH/4));
+			CNFGTackRectangle( x, y, x+(FBW/4)-1, y+(FBH/4)-1);
 		}
 		break;
 	}
