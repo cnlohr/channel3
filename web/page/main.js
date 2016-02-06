@@ -20,7 +20,7 @@ var last_custom_program_data;
 var last_custom_program_color;
 //Utility functions for the inner scripts:
 
-var DefaultCode = "color = 5;\nvar freq1 = 61.25;\nvar power1 = 1.0;\nvar phase = 0.1;\nvar freq2 = freq1 + 315.0/88.0;\nvar power2 = 1.0;\nfor( var i = 0; i < nrsamps; i++ ) {\n  \
+var DefaultCode = "autoset = 0;\ncolor = 5;\nvar freq1 = 61.25;\nvar power1 = 1.0;\nvar phase = 0.1;\nvar freq2 = freq1 + 315.0/88.0;\nvar power2 = 1.0;\nfor( var i = 0; i < nrsamps; i++ ) {\n  \
 var ev = Math.sin(i*6.283185 * freq1 / spsout )*power1;\n  \
 ev += Math.sin(i*6.283185 * freq2 / spsout + phase*6.283185 )*power2;\n  \
 sampout[i] = ev;\n  \
@@ -38,6 +38,7 @@ function MakeProgram( KexecCode )
 	var spsout = 80;\n\
 	var dftlow = 0.0;\n\
 	var color = 5;\n\
+	var autoset = 0;\n\
 	var dfthigh = 0.0;\n\
 	var nrsamps = 1408;\n\
 	var cansend = false;\n\
@@ -54,6 +55,7 @@ function MakeProgram( KexecCode )
 		k.msg = '';\n\
 		k.sampout = [];\n\
 		k.dft = [];\n\
+		k.autoset = autoset\n\
 		k.dftmax = -1.0\n\
 		if( cansend ) { \n\
 			try {\n\
@@ -128,6 +130,16 @@ function NTSCGotMessage(e) {
 	var dftmax = e.data.dftmax;
 	var ctx=NTSCCanvas.getContext("2d");
 	ctx.clearRect(0, 0, w+rangeleft+1, h);
+	ctx.font = "48px Arial"
+	ctx.textBaseline="bottom"; 
+	ctx.textAlign = "right";
+	ctx.fillStyle="#ff9090";
+	ctx.fillText( "Simulation", w, 50 );
+	ctx.fillStyle="#000000";
+
+
+
+	ctx.strokeStyle="#000000";
 	ctx.font = "18px Arial";
 
 	$("#UploadColor").prop("disabled", true );
@@ -201,6 +213,11 @@ function NTSCGotMessage(e) {
 	ctx.strokeStyle="#ff0000";
 	ctx.setLineDash([0]);
 
+	if( e.data.autoset )
+	{
+		UploadColorFunc( null );
+	}
+
 	last_custom_program_data = e.data.sampout;
 	last_custom_program_color =  e.data.color;
 	//Fix 'Upload' button.
@@ -216,7 +233,7 @@ function CVSSetResp( e )
 
 function UploadColorFunc( e )
 {
-	console.log( "Uploading " + last_custom_program_color );
+	//console.log( "Uploading " + last_custom_program_color );
 
 	//last_custom_program_data
  

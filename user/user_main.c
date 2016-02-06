@@ -87,6 +87,19 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 
 	switch( showstate )
 	{
+	case 11:  // State that's not in the normal set.  Just displays boxes.
+	{
+		for( i = 0; i < 16; i++ )
+		{
+			int x = i%4;
+			int y = i/4;
+			x *= (FBW/4);
+			y *= (FBH/4);
+			CNFGColor( i );
+			CNFGTackRectangle( x, y, x+(FBW/4), y+(FBH/4));
+		}
+		break;
+	}
 	case 10:
 	{
 		int i;
