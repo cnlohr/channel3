@@ -197,7 +197,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		break;
 	}
 	case 6:
-		CNFGDrawText( "Lines on double-buffered 256x240.", 2 );
+		CNFGDrawText( "Lines on double-buffered 232x220.", 2 );
 		if( framessostate > 60 )
 		{
 			for( i = 0; i < 350; i++ )
@@ -224,7 +224,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 
 		CNFGPenY += 14;
 		CNFGPenX -= 5;
-		CNFGDrawText( "...on 256x240 gfx", 2 );
+		CNFGDrawText( "...on 232x220 gfx", 2 );
 
 		if( framessostate > 60 && showstate == 4 )
 		{
@@ -244,7 +244,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 			}
 			if( y == 7 )
 			{
-				ets_memcpy( lastct + 10, "38x14 TEXT MODE", 15 );
+				ets_memcpy( lastct + 10, "36x12 TEXT MODE", 15 );
 			}
 			lastct[x] = 0;
 			CNFGDrawText( lastct, 2 );
