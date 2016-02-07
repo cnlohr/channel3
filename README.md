@@ -36,7 +36,7 @@ The following demo screens are available.  They normally tick through one after 
 
 1. Basic intro screen, shows IP address if available.
 2. ESP8266 Features
-3-5. Intro to and completion of framebuffer copy test.  Beware, running this screen too long deliberately will cause a crash.
+3. Intro to and completion of framebuffer copy test.  Beware, running this screen too long deliberately will cause a crash.
 6. Draw a bunch of lines... IN COLOR!
 7. Matrix-based 3D engine demo.
 8. Dynamic 3D mesh demo.
@@ -59,7 +59,8 @@ For all the 3D and text, I'm using a new modified version of my "rawdraw" librar
 ## Youtube video
 
 Here is the original youtube video on this project:
-[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/SSiRkpgwVKY/0.jpg)](http://www.youtube.com/watch?v=SSiRkpgwVKY)
+
+[![NTSC Video on the ESP8266](http://img.youtube.com/vi/SSiRkpgwVKY/0.jpg)](http://www.youtube.com/watch?v=SSiRkpgwVKY)
 
 A new one is in the works.
 
