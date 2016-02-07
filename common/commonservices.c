@@ -779,7 +779,7 @@ static void ICACHE_FLASH_ATTR SwitchToSoftAP( )
 static void ICACHE_FLASH_ATTR SlowTick( int opm )
 {
 //	uart0_sendStr(".");
-	printf( "%d", opm );
+//	printf( "%d", opm );
 
 	HTTPTick(1);
 

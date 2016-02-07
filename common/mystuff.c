@@ -96,7 +96,7 @@ void ICACHE_FLASH_ATTR  EndTCPWrite( struct 	espconn * conn )
 {
 	if(generic_ptr!=generic_buffer)
 	{
-		int r = espconn_sent(conn,generic_buffer,generic_ptr-generic_buffer);
+		int r = espconn_send(conn,generic_buffer,generic_ptr-generic_buffer);
 	}
 }
 
@@ -116,7 +116,7 @@ void PushBlob( const uint8 * buffer, int len )
 }
 
 
-int8_t TCPCanSend( struct espconn * conn, int size )
+int8_t ICACHE_FLASH_ATTR TCPCanSend( struct espconn * conn, int size )
 {
 #ifdef SAFESEND
 	return TCPDoneSend( conn );

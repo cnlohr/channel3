@@ -17,12 +17,8 @@ void ICACHE_FLASH_ATTR FindMPFS()
 	spi_flash_read( MFS_START, mfs_check, sizeof( mfs_check ) );
 	if( strncmp( "MPFSMPFS", mfs_check, 8 ) == 0 ) { mfs_at = MFS_START; goto done; }
 	
-	printf( "MFS Not found at regular address (%08x).\n", mfs_check[0], mfs_check[1] );
-
 	spi_flash_read( MFS_ALTERNATIVE_START, mfs_check, sizeof( mfs_check ) );
 	if( strncmp( "MPFSMPFS", mfs_check, 8 ) == 0 ) { mfs_at = MFS_ALTERNATIVE_START; goto done; }
-
-	printf( "MFS Not found at alternative address (%08x%08x).\n", mfs_check[0], mfs_check[1] );
 
 done:
 	printf( "MFS Found at: %08x\n", mfs_at );

@@ -39,12 +39,12 @@ td { vertical-align: top; }
 <tr><td width=1>
 <input type=submit onclick="ShowHideEvent( 'NTSC' ); KickNTSC();" value="NTSC"></td><td>
 <div id=NTSC class="collapsible">
+<strong>Current</strong>: Continue Demo: <INPUT TYPE=checkbox id=EnableAdvance> Set Demo: <INPUT TYPE=text id=ScreenNumber size=3> Jam: <INPUT TYPE=text id=ScreenJamb value=-1 size=3> <INPUT TYPE=submit onclick="ntsc_set();" value="Set Current"> 
+<br><STRONG>Discrete Fourier Analysis:</strong>
 <TABLE>
-<TR><TD>Black</TD><TD><DIV id=CB0>...</DIV></TD><TD><INPUT id="d_0"><INPUT id="c_0"></TD></TR>
-<TR><TD>w-t-b</TD><TD><DIV id=CB1>...</DIV></TD><TD><INPUT id="d_1"><INPUT id="c_1"></TD></TR>
-<TR><TD>b-t-w</TD><TD><DIV id=CB2>...</DIV></TD><TD><INPUT id="d_2"><INPUT id="c_2"></TD></TR>
-<TR><TD>White</TD><TD><DIV id=CB3>...</DIV></TD><TD><INPUT id="d_3"><INPUT id="c_3"></TD></TR>
-<TR><TD>Sync</TD><TD><DIV id=CB4>...</DIV></TD><TD><INPUT id="d_4"><INPUT id="c_4"></TD></TR>
+<TR><TD><CANVAS id=FTCanvas width=600 height=180></CANVAS></TD></TR>
+<TR><TD>DFT Frequencies from: <INPUT TYPE=text id=FTLow maxlength=7 value=60.0 size=7>MHz to <INPUT TYPE=text id=FTHigh maxlength=7 value=66.6 size=7>MHz @ Window of <INPUT TYPE=text value=100 id=FTWindow size=7> bits;  <input type="checkbox" id="usedbscale">Use dB scale.</TD></TR>
+<TR><TD><SELECT id=ProgramId></SELECT> | <INPUT type=text id=NTSCSaveName> <INPUT TYPE=submit onclick="SaveNTSCProgram()" Value=Save> | <INPUT TYPE=submit value="Upload As X" id=UploadColor onclick="UploadColorFunc();"><br><TEXTAREA ID=NTSCprogram COLS=80 ROWS=20></textarea></TD></TR>
 </TABLE>
 </div></td></tr>
 

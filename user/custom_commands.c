@@ -3,28 +3,18 @@
 #include <commonservices.h>
 #include <ntsc_broadcast.h>
 #include <mystuff.h>
+#include "../tablemaker/broadcast_tables.h"
 
-//Defaults
-const uint32_t tRFmaps[] = {
-		BLACK_LEVEL_d, WTB_LEVEL_d, BTW_LEVEL_d, WHITE_LEVEL_d, SYNC_LEVEL_d };
+extern uint8_t showstate;
+extern uint8_t showallowadvance;
+extern int8_t jam_color;
 
 void ICACHE_FLASH_ATTR ReinitSettings()
 {
-	printf( "Restoring to factory %d\n", sizeof( tRFmaps ) );
-	//Load from factory default.
-	ets_memcpy( SETTINGS.UserData, tRFmaps, sizeof( tRFmaps ) );
-	ets_memcpy( RFmaps, tRFmaps, sizeof( tRFmaps ) );
-	int i;
-	for( i = 0; i < 5; i++ )
-	{
-		printf( " %08x\n", tRFmaps[i] );
-	}
 }
 
 void ICACHE_FLASH_ATTR SettingsLoaded()
 {
-	printf( "Loading to from \"settings\"\n" );
-	ets_memcpy( RFmaps, SETTINGS.UserData, sizeof( RFmaps ) );
 }
 
 
@@ -40,43 +30,54 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 		return buffend-buffer;
 	}
 
-	case 'g': case 'G': //get NTSC bits
+	case 'o': case 'O':  //co xxyy   (where xx = current show state, yy = allow advancing)
 	{
-		int i, it = 0;
-		buffend += ets_sprintf( buffend, "CG:%08x:%08x:%08x:%08x:%08x\n", RFmaps[0], RFmaps[1], RFmaps[2], RFmaps[3], RFmaps[4] );
-		return buffend-buffer;
+		//Show control
+		char * bp = &buffer[3];
+		uint8_t rh = 0;
+		rh = fromhex1( *(bp++) );
+		showstate = (rh << 4) | fromhex1( *(bp++) );
+		rh = fromhex1( *(bp++) );
+		showallowadvance = (rh << 4) | fromhex1( *(bp++) );
+		rh = fromhex1( *(bp++) );
+		jam_color = (rh << 4) | fromhex1( *(bp++) );
+		break;
 	}
 
-	case 'd': case 'D': //get default NTSC bits
+	case 'v': case 'V': //cv xxnnnnnnnnnnnnn (where xx is the color #, nnnnnnnn is the color data)
 	{
-		int i, it = 0;
-		buffend += ets_sprintf( buffend, "CG:%08x:%08x:%08x:%08x:%08x\n", tRFmaps[0], tRFmaps[1], tRFmaps[2], tRFmaps[3], tRFmaps[4] );
-		return buffend-buffer;
-	}
-
-
-	case 's': case 'S': //set NTSC bits
-	{
-		printf( "Setting NTSC Bits: %s\n", buffer+3 );
 		int i;
 		char * bp = &buffer[3];
-		for( i = 0; i < 5; i++ )
+
+		uint8_t ch = fromhex1( *(bp++) ); 
+		ch = (ch<<4) | fromhex1( *(bp++) );
+
+		if( ch >= PREMOD_SIZE )
 		{
-			uint32_t rh = 0;
+			buffend += ets_sprintf( buffend, "!CV" );
+			break;
+		}
+
+		//XXX Todo: make sure we don't read off the end of the input array.
+		for( i = 0; i < PREMOD_ENTRIES; i++ )
+		{
 			int k;
+			uint32_t colval = 0;
 			for( k = 0; k < 8; k++ )
 			{
-				rh = (rh << 4) | fromhex1( *(bp++) );
+				colval = (colval<<4) | fromhex1( *(bp++) );
 			}
-			RFmaps[i] = rh;
+			premodulated_table[i*PREMOD_SIZE + ch] = colval;
 		}
-		buffend += ets_sprintf( buffend, "CS:%08x:%08x:%08x:%08x:%08x\n", RFmaps[0], RFmaps[1], RFmaps[2], RFmaps[3], RFmaps[4] );
-		ets_memcpy( SETTINGS.UserData, RFmaps, sizeof( RFmaps ) );
-		redo_maps();
-		return buffend-buffer;
+
+		//Add the overspill bits.
+		for( i = PREMOD_ENTRIES; i < PREMOD_ENTRIES_WITH_SPILL; i++ )
+		{
+			premodulated_table[i*PREMOD_SIZE + ch] = premodulated_table[(i-PREMOD_ENTRIES)*PREMOD_SIZE + ch];
+		}
+		
+		break;
 	}
-
-
 	}
 	return -1;
 }

@@ -9,6 +9,18 @@
 #include "mystuff.h"
 #include "ip_addr.h"
 
+//#define DISABLE_MDNS
+
+#ifdef DISABLE_MDNS
+
+
+void ICACHE_FLASH_ATTR SetupMDNS() { }
+int ICACHE_FLASH_ATTR JoinGropMDNS() { }
+void ICACHE_FLASH_ATTR AddMDNSService( const char * ServiceName, const char * Text, int port ) { }
+void ICACHE_FLASH_ATTR AddMDNSName( const char * ToDup ) { }
+
+#else
+
 #define MDNS_BRD 0xfb0000e0
 
 static char * MDNSNames[MAX_MDNS_NAMES];
@@ -23,6 +35,7 @@ static uint16_t MDNSServicePorts[MAX_MDNS_SERVICES];
 
 static char MDNSSearchName[MAX_MDNS_PATH];
 
+#define os_zfree os_free
 
 void ICACHE_FLASH_ATTR AddMDNSService( const char * ServiceName, const char * Text, int port )
 {
@@ -470,4 +483,5 @@ int ICACHE_FLASH_ATTR JoinGropMDNS()
 	return 1;
 }
 
+#endif
 
