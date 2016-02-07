@@ -392,7 +392,7 @@ function LoadNTSC()
 
 	$("#FTLow").val( "00.0" );
 	$("#FTHigh").val( "40.0" );
-	$("#FTWindow").val( "100" );
+	$("#FTWindow").val( "1408" );
 	$("#FTLow").change(UpdateDFTRange);
 	$("#FTHigh").change(UpdateDFTRange);
 	$("#FTWindow").change(UpdateDFTRange);
