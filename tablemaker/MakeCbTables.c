@@ -15,7 +15,7 @@
 int main()
 {
 
-	uint8_t CbLookup[525];
+	uint8_t CbLookup[NTSC_LINES];
 	int x;
 	//Setup the callback table.
 	for( x = 0; x < 3; x++ )
@@ -48,7 +48,7 @@ int main()
 		CbLookup[x] = FT_B_d;
 	for( ; x < 519-15; x++ )
 		CbLookup[x] = FT_LIN_d;
-	for( ; x < 525-1; x++ )
+	for( ; x < NTSC_LINES-1; x++ )
 		CbLookup[x] = FT_B_d;
 	CbLookup[x] = FT_CLOSE_d;
 
@@ -68,16 +68,16 @@ int main()
 #define FT_CLOSE 6\n\
 #define FT_MAX_d 7\n\
 \n\
-#define NTSC_LINES 525\n\
+#define NTSC_LINES %d\n\
 \n\
-uint8_t CbLookup[263];\n\
+uint8_t CbLookup[%d];\n\
 \n\
-#endif\n\n" );
+#endif\n\n", NTSC_LINES, (NTSC_LINES+1)/2 );
 	fclose( f );
 
 	f = fopen( "CbTable.c", "w" );
 	fprintf( f, "#include \"CbTable.h\"\n\n" );
-	fprintf( f, "uint8_t CbLookup[263] = {" );
+	fprintf( f, "uint8_t CbLookup[%d] = {", (NTSC_LINES+1)/2 );
 	for( x = 0; x < 263; x++ )
 	{
 		if( (x & 0x0f) == 0 )

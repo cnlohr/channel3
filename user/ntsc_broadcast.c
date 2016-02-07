@@ -57,7 +57,6 @@ Extra copyright info:
 //Each NTSC line = 15,734.264 Hz.  63556 ns
 //Each group of 4 bytes = 
 
-#define NTSC_LINES 525
 #define LINETYPES 6
 
 int8_t jam_color = -1; 

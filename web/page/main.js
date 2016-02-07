@@ -37,7 +37,7 @@ function MakeProgram( KexecCode )
 	var i = 0;\n\
 	var spsout = 80;\n\
 	var dftlow = 0.0;\n\
-	var color = 5;\n\
+	var color = -1;\n\
 	var autoset = 0;\n\
 	var dfthigh = 0.0;\n\
 	var nrsamps = 1408;\n\
@@ -230,12 +230,12 @@ function NTSCGotMessage(e) {
 
 function CVSSetResp( e )
 {
-	//console.log( e );
+	//Response from setting CV.  We should probably check to make sure the operation didn't fail.
 }
 
 function UploadColorFunc( e )
 {
-	//console.log( "Uploading " + last_custom_program_color );
+	console.log( "Uploading " + last_custom_program_color );
 
 	//last_custom_program_data
  
@@ -245,7 +245,7 @@ function UploadColorFunc( e )
 		var lwords = last_custom_program_data.length/8;
 		var i;
 		var place = 0;
-		//console.log( "LWords: " + lwords );
+
 		for( i = 0; i < lwords; i++ )
 		{
 			var lvword = 0;
@@ -257,14 +257,8 @@ function UploadColorFunc( e )
 			CVSet += tohex8( lvword );
 		}
 
-		//console.log( "Sending: " + CVSet );
 		QueueOperation( CVSet, CVSSetResp );
 	}
-//	CVSet = "CO ";
-//	CVSet += tohex8( Number($("#ScreenNumber").val()) );
-//	CVSet += tohex8( $("#EnableAdvance").prop('checked')?1:0 );
-//	CVSet += tohex8( Number($("#ScreenJamb").val()) );
-//	QueueOperation( CVSet, null );
 }
 
 
@@ -292,10 +286,12 @@ function ChangeProgram( e )
 {
 	//console.log( "change"  );
 	var ProgramID = $("#ProgramId").val();
+	if( ProgramID == null ) ProgramID = 0;
 
 	pgms = JSON.parse( localStorage.ntprograms );
 
 	$("#NTSCprogram").val( pgms[ProgramID].dat );
+	$("#NTSCSaveName").val( pgms[ProgramID].nam );
 	ReworkWorker( $("#NTSCprogram") );
 }
 
@@ -330,13 +326,17 @@ function UpdateOptionArray()
 		.remove()
 		.end();
 
+	var matching = 0;
+	var matchname = $("#NTSCSaveName").val();
 	for( var i = 0; i < pgms.length; i++ )
 	{
-		console.log( pgms[i] );
 		$('#ProgramId').append($("<option></option>")
-         .attr("value",i)
-         .text(pgms[i].nam));
+	         .attr("value",i)
+	         .text(pgms[i].nam));
+		if( pgms[i].nam == matchname ) matching = i;
 	}
+
+	$('#ProgramId').val( matching );
 }
 
 function SaveNTSCProgram()
@@ -406,60 +406,10 @@ function LoadNTSC()
 
 	HandleNewWebWorkerCode();
 
-//	$("NTSCprogram").on("input", ReworkWorker);
-
-//	$("#ProgramId");
-//	<TR><TD><SELECT id=ProgramId><option value="0">Default</option></SELECT> | <INPUT type=text id=SaveName> <INPUT TYPE=submit ID=Save Value=Save> | <INPUT TYPE=submit value="Upload As X"><br><TEXTAREA ID=program COLS=80 ROWS=20></textarea></TD></TR>
-
-
 	KickNTSC();
 }
 
 
-
-
-
-
-/*function GotNTSC(req,data)
-{
-	var vs = data.split( ":" );
-	for( var i = 0; i < 5; i++ )
-	{
-		num = parseInt( vs[i+1], 16 );
-		if( lastencs[i] != num )
-		{
-			lastencs[i] = num;
-			console.log( num );
-			for( var k = 0; k < 32; k++ )
-			{
-				var ch = Math.pow( 2, 31-k ) & num;
-				$("#ntcb"+i+"_"+k).prop('checked', ch?true:false);
-			}
-		}
-	}
-	ntscloaded = true;
-	QueueOperation( "CD",  GotNTSCDefault );
-} 
-
-function GotNTSCDefault(req,data)
-{
-	var vs = data.split( ":" );
-	for( var i = 0; i < 5; i++ )
-	{
-		num = parseInt( vs[i+1], 16 );
-		var scmd = "0x";
-		for( var k = 0; k < 4; k++ )
-		{
-			//console.log( (userchecks >> (24 - k*3))&0xff );
-			scmd += tohex8( (num / Math.pow( 2, (24 - k*8)))  & 0xFF );
-		}
-
-		$("#d_"+i).prop( "value", scmd );
-		$("#d_"+i).prop('disabled',true);
-	}
-	NTSCDataTicker();
-} 
-*/
 
 function ntsc_set()
 {
@@ -478,43 +428,6 @@ function NTSCDataTicker()
 		//QueueOperation( "CG",  GotNTSC );
 
 		is_ntsc_running = true;
-/*		var pushchanges = false;
-		var scmd = "CS:";
-
-		for( i = 0; i < 5; i++ )
-		{
-			var userchecks = 0;
-			for( var k = 0; k < 32; k++ )
-			{
-				var ch = Math.pow( 2,(31-k));
-				userchecks += ($("#ntcb"+i+"_"+k).prop('checked'))?ch:0;
-			}
-			if( userchecks != lastencs[i] )
-			{
-				pushchanges = true;
-			}
-
-			var kcmd = "0x";
-			for( var k = 0; k < 4; k++ )
-			{
-				kcmd += tohex8( (userchecks / Math.pow( 2, (24 - k*8)))  & 0xFF );
-			}
-			$("#c_"+i).prop( "value", kcmd );
-
-
-			for( var k = 0; k < 4; k++ )
-			{
-				//console.log( (userchecks >> (24 - k*3))&0xff );
-				scmd += tohex8( (userchecks / Math.pow( 2, (24 - k*8)))  & 0xFF );
-			}
-		}
-
-		if( pushchanges && ntscloaded )
-		{
-			console.log( scmd );
-			QueueOperation( scmd,  NTSCDataTicker );
-		}
-*/
 	}
 	else
 	{
