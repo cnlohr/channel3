@@ -63,6 +63,7 @@ Here is the original youtube video on this project:
 [![NTSC Video on the ESP8266](http://img.youtube.com/vi/SSiRkpgwVKY/0.jpg)](http://www.youtube.com/watch?v=SSiRkpgwVKY)
 
 Here is the new video (with COLOR):
+
 [![Broadcasting COLOR Channel 3 on an ESP](http://img.youtube.com/vi/bcez5pcp55w/0.jpg)](http://www.youtube.com/watch?v=bcez5pcp55w)
 
 
