@@ -1,5 +1,5 @@
-FW_FILE_1:=0x00000.bin
-FW_FILE_2:=0x40000.bin
+FW_FILE_1:=image.elf-0x00000.bin
+FW_FILE_2:=image.elf-0x40000.bin
 TARGET_OUT:=image.elf
 all : $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
 
@@ -19,10 +19,9 @@ SRCS:=driver/uart.c \
 	tablemaker/broadcast_tables.c \
 	tablemaker/CbTable.c
 
-GCC_FOLDER:=~/esp8266/esp-open-sdk/xtensa-lx106-elf
-ESPTOOL_PY:=~/esp8266/esptool/esptool.py
-FW_TOOL:=~/esp8266/other/esptool/esptool
-SDK:=/home/cnlohr/esp8266/esp_iot_sdk_v1.5.1
+GCC_FOLDER:=~/esp-open-sdk/xtensa-lx106-elf
+ESPTOOL_PY:=~/esp-open-sdk/esptool/esptool.py
+SDK:=/home/baitisj/esp-open-sdk/esp_iot_sdk_v1.5.2
 PORT:=/dev/ttyUSB0
 #PORT:=/dev/ttyACM0
 
@@ -71,11 +70,11 @@ $(TARGET_OUT) : $(SRCS)
 
 $(FW_FILE_1): $(TARGET_OUT)
 	@echo "FW $@"
-	$(FW_TOOL) -eo $(TARGET_OUT) -bo $@ -bs .text -bs .data -bs .rodata -bc -ec
+	$(ESPTOOL_PY) elf2image $(TARGET_OUT)
 
 $(FW_FILE_2): $(TARGET_OUT)
 	@echo "FW $@"
-	$(FW_TOOL) -eo $(TARGET_OUT) -es .irom0.text $@ -ec
+	$(ESPTOOL_PY) elf2image $(TARGET_OUT)
 
 burn : $(FW_FILE_1) $(FW_FILE_2)
 	($(ESPTOOL_PY) --port $(PORT) write_flash 0x00000 0x00000.bin 0x40000 0x40000.bin)||(true)
