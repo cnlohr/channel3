@@ -19,17 +19,17 @@ SRCS:=driver/uart.c \
 	tablemaker/broadcast_tables.c \
 	tablemaker/CbTable.c
 
-GCC_FOLDER:=~/esp-open-sdk/xtensa-lx106-elf
-ESPTOOL_PY:=~/esp-open-sdk/esptool/esptool.py
-SDK:=/home/baitisj/esp-open-sdk/esp_iot_sdk_v1.5.2
+GCC_FOLDER:=~/esp8266/esp-open-sdk/xtensa-lx106-elf
+ESPTOOL_PY:=~/esp8266/esptool/esptool.py
+SDK:=/home/cnlohr/esp8266/esp_iot_sdk_v1.5.2
 PORT:=/dev/ttyUSB0
 #PORT:=/dev/ttyACM0
 
 XTLIB:=$(SDK)/lib
 XTGCCLIB:=$(GCC_FOLDER)/lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a
 FOLDERPREFIX:=$(GCC_FOLDER)/bin
+CC:=$(FOLDERPREFIX)/$(PREFIX)gcc
 PREFIX:=$(FOLDERPREFIX)/xtensa-lx106-elf-
-CC:=$(PREFIX)gcc
 
 CFLAGS:=-mlongcalls -I$(SDK)/include -Imyclib -Iinclude -Iuser -Os -I$(SDK)/include/ -Icommon -DICACHE_FLASH
 
@@ -64,17 +64,18 @@ LINKFLAGS:= \
 #	$(PREFIX)ld $^ $(LDFLAGS) -o $@
 
 $(TARGET_OUT) : $(SRCS)
+	echo $$PATH
 	$(PREFIX)gcc $(CFLAGS) $^  $(LINKFLAGS) -o $@
 	nm -S -n $(TARGET_OUT) > image.map
 	$(PREFIX)objdump -S $@ > image.lst
 
 $(FW_FILE_1): $(TARGET_OUT)
 	@echo "FW $@"
-	$(ESPTOOL_PY) elf2image $(TARGET_OUT)
+	PATH=$(FOLDERPREFIX):$$PATH;$(ESPTOOL_PY) elf2image $(TARGET_OUT)
 
 $(FW_FILE_2): $(TARGET_OUT)
 	@echo "FW $@"
-	$(ESPTOOL_PY) elf2image $(TARGET_OUT)
+	PATH=$(FOLDERPREFIX):$$PATH;$(ESPTOOL_PY) elf2image $(TARGET_OUT)
 
 burn : $(FW_FILE_1) $(FW_FILE_2)
 	($(ESPTOOL_PY) --port $(PORT) write_flash 0x00000 0x00000.bin 0x40000 0x40000.bin)||(true)
