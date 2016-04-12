@@ -78,7 +78,7 @@ $(FW_FILE_2): $(TARGET_OUT)
 	PATH=$(FOLDERPREFIX):$$PATH;$(ESPTOOL_PY) elf2image $(TARGET_OUT)
 
 burn : $(FW_FILE_1) $(FW_FILE_2)
-	($(ESPTOOL_PY) --port $(PORT) write_flash 0x00000 0x00000.bin 0x40000 0x40000.bin)||(true)
+	($(ESPTOOL_PY) --port $(PORT) write_flash 0x00000 image.elf-0x00000.bin 0x40000 image.elf-0x40000.bin)||(true)
 
 #If you have space, MFS should live at 0x100000, if you don't it can also live at
 #0x10000.  But, then it is limited to 180kB.  You might need to do this if you have a 512kB 
@@ -91,7 +91,7 @@ burnweb : web/page.mpfs
 IP?=192.168.4.1
 
 netburn : image.elf $(FW_FILE_1) $(FW_FILE_2)
-	web/execute_reflash $(IP) 0x00000.bin 0x40000.bin
+	web/execute_reflash $(IP) image.elf-0x00000.bin image.elf-0x40000.bin
 
 clean :
 	rm -rf user/*.o driver/*.o $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
