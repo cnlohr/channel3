@@ -401,7 +401,10 @@ void ICACHE_FLASH_ATTR user_init(void)
 		wifi_station_set_config(&stationConf);
 		wifi_set_opmode(1);
 	}
+#else
+		wifi_set_opmode(2);
 #endif
+
 
     pUdpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
 	ets_memset( pUdpServer, 0, sizeof( struct espconn ) );

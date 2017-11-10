@@ -26,7 +26,7 @@ PORT:=/dev/ttyUSB0
 #PORT:=/dev/ttyACM0
 
 XTLIB:=$(SDK)/lib
-XTGCCLIB:=$(GCC_FOLDER)/lib/gcc/xtensa-lx106-elf/4.8.2/libgcc.a
+XTGCCLIB:=$(GCC_FOLDER)/lib/gcc/xtensa-lx106-elf/4.8.5/libgcc.a
 FOLDERPREFIX:=$(GCC_FOLDER)/bin
 CC:=$(FOLDERPREFIX)/$(PREFIX)gcc
 PREFIX:=$(FOLDERPREFIX)/xtensa-lx106-elf-
@@ -78,7 +78,7 @@ $(FW_FILE_2): $(TARGET_OUT)
 	PATH=$(FOLDERPREFIX):$$PATH;$(ESPTOOL_PY) elf2image $(TARGET_OUT)
 
 burn : $(FW_FILE_1) $(FW_FILE_2)
-	($(ESPTOOL_PY) --port $(PORT) write_flash 0x00000 image.elf-0x00000.bin 0x40000 image.elf-0x40000.bin)||(true)
+	($(ESPTOOL_PY) -b 2000000 --port $(PORT) write_flash 0x00000 image.elf-0x00000.bin 0x40000 image.elf-0x40000.bin)||(true)
 
 #If you have space, MFS should live at 0x100000, if you don't it can also live at
 #0x10000.  But, then it is limited to 180kB.  You might need to do this if you have a 512kB 
