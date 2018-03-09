@@ -41,8 +41,8 @@ int main()
 {
 	double lower_edge = 60;
 	double base = lower_edge+1.25;
-	double targ_freq_0 = lower_edge+5.75;
-	double targ_freq_1 = lower_edge+5.75;
+	double targ_freq_0 = lower_edge+5.75-0.01;
+	double targ_freq_1 = lower_edge+5.75+0.01;
 	double mhz = 80;//1040/6.0; 
 
 	int sampsx32 = 1000;
@@ -55,17 +55,19 @@ int main()
 	printf( "#define I2SDATASIZE %d\n", sampsx32 );
 
 	double dfs[2];
-	double amps[2] = {.52, 1.0 };
+	double amps[2] = {.53, 1.0 };
 
 	printf( "uint32_t table0[%d] = {", sampsx32 );
 	dfs[0] = targ_freq_0 / mhz ;
 	dfs[1] = base/mhz;
+	amps[1] = 1;
 	OutputTable( sampsx32, dfs, amps, 2, .5 );
 	printf( "};\n" );
 
 	printf( "uint32_t table1[%d] = {", sampsx32 );
-	dfs[0] = targ_freq_1 / mhz ;
+	dfs[0] = targ_freq_1 / mhz;
 	dfs[1] = base/mhz;
+	amps[1] = 1.0;
 	OutputTable( sampsx32, dfs, amps, 2, .5 );
 	printf( "};\n" );
 
