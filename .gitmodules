@@ -1,0 +1,3 @@
+[submodule "nowifi/nosdk8266"]
+	path = nowifi/nosdk8266
+	url = https://github.com/cnlohr/nosdk8266
