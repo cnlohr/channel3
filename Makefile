@@ -21,7 +21,7 @@ SRCS:=driver/uart.c \
 
 GCC_FOLDER:=~/esp8266/esp-open-sdk/xtensa-lx106-elf
 ESPTOOL_PY:=~/esp8266/esptool/esptool.py
-SDK:=/home/cnlohr/esp8266/esp_iot_sdk_v1.5.2
+SDK:=/home/cnlohr/esp8266/esp_iot_sdk_v1.5.0
 PORT:=/dev/ttyUSB0
 #PORT:=/dev/ttyACM0
 
@@ -93,7 +93,14 @@ IP?=192.168.4.1
 netburn : image.elf $(FW_FILE_1) $(FW_FILE_2)
 	web/execute_reflash $(IP) image.elf-0x00000.bin image.elf-0x40000.bin
 
+tablemaker/broadcast_tables.c : tablemaker/synthtables
+	cd tablemaker && ./synthtables; cd ..
+
+tablemaker/synthtables : tablemaker/synthtables.c
+	gcc -o $@ $^ -g -lm
+
+
 clean :
-	rm -rf user/*.o driver/*.o $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
+	rm -rf user/*.o driver/*.o $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2) tablemaker/broadcast_tables.c tablemaker/synthtables tablemaker/broadcast_tables.h
 
 

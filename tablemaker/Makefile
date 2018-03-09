@@ -1,8 +1,4 @@
-all : synthtables MakeCbTables
-
-synthtables : synthtables.c
-	gcc -o $@ $^ -g -lm
-	./synthtables
+all : MakeCbTables
 
 MakeCbTables : MakeCbTables.c
 	gcc -o $@ $^ -g -lm

@@ -84,6 +84,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 /*
 
 */
+	showstate = 11;
 
 	switch( showstate )
 	{

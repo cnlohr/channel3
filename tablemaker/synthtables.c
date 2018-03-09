@@ -54,6 +54,7 @@ void WriteSignal( double LumaValue, double ChromaValue, double Boundary, double 
 		double ModV = sin( ( MODULATION_Frequency * t ) * PI2 / 1000.0 + eps );
 #ifdef DIRECT_CHROMA_CARRIER_SYNTHESIS
 		double ChromaNV = sin( ((NTSC_Frequency+MODULATION_Frequency) * t ) * PI2 / 1000.0 + eps  + ChromaShift * PI2  );
+		//double ChromaNV = 0;
 		double Signal = ModV * LumaValue + ChromaNV * ChromaValue + Boundary;
 #else
 		double ChromaV = sin( (NTSC_Frequency * t ) * PI2 / 1000.0 + eps  + ChromaShift * PI2  );
@@ -74,12 +75,33 @@ void WriteSignal( double LumaValue, double ChromaValue, double Boundary, double 
 	}
 }
 
+void WriteAudio( double freqshift, uint32_t * raw_output, uint32_t mask )
+{
+	double t = 0;
+	int i;
+	int bitplace = 0;
+	int byteplace = 0;
+
+	for( i = 0; i < samples+overshoot; i++ )
+	{
+		double ModV = sin( ( (MODULATION_Frequency+4.5+freqshift) * t ) * PI2 / 1000.0 + eps );
+		if( ModV > .5 )
+			raw_output[byteplace] |= (1<<(31-bitplace)) & mask;
+		bitplace++;
+		if( bitplace == 32 ) { bitplace = 0; byteplace++; }
+		t += 1000.0 / BIT_Frequency;
+	}
+}
+
+
 int main()
 {
 	#define TABLESIZE 18
+	#define AUDIO_LEVELS 4
 	int stride = (samples+overshoot)/32;
 
 	uint32_t databuffer[stride*TABLESIZE];
+	uint32_t audiobuffer[stride*AUDIO_LEVELS];
 	memset( databuffer, 0, sizeof( databuffer ) );
 	int i;
 	double t = 0;	//In ns.
@@ -128,6 +150,26 @@ int main()
 		fprintf( f, "0x%02x, ", (val) );
 	}
 	fprintf( f, "\n};\n" );
+
+
+	for( i = 0; i < AUDIO_LEVELS; i++ )
+	{
+		//WriteAudio( .02*(i-AUDIO_LEVELS/2-0.5)/AUDIO_LEVELS, &audiobuffer[stride*i], 0xffffffff );
+		WriteAudio( 0.0, &audiobuffer[stride*i], 0xffffffff );
+	}
+
+	fprintf( f, "uint32_t premodulated_audiotable[%d] = {", stride * AUDIO_LEVELS );
+	for( i = 0; i < AUDIO_LEVELS*stride; i++ )
+	{
+		int imod = i % AUDIO_LEVELS;
+		int idiv = i / AUDIO_LEVELS;
+		uint32_t val = audiobuffer[imod * stride + idiv];
+		if( imod == 0 ) { fprintf( f, "\n\t" ); }
+		fprintf( f, "0x%02x, ", (val) );
+	}
+	fprintf( f, "\n};\n" );
+
+	
 	fclose( f );
 
 	f = fopen( "broadcast_tables.h", "w" );
@@ -137,10 +179,12 @@ int main()
 	fprintf( f, "#define PREMOD_ENTRIES %d\n", samples/32 );
 	fprintf( f, "#define PREMOD_ENTRIES_WITH_SPILL %d\n", (samples+overshoot)/32 );
 	fprintf( f, "#define PREMOD_SIZE %d\n", TABLESIZE );
+	fprintf( f, "#define AUDIO_LEVELS %d\n", AUDIO_LEVELS );
 	fprintf( f, "#define SYNC_LEVEL 17\n" );
 	fprintf( f, "#define COLORBURST_LEVEL 16\n" );
 	fprintf( f, "#define BLACK_LEVEL 0\n" );
 	fprintf( f, "extern uint32_t premodulated_table[%d];\n\n", stride * TABLESIZE );
+	fprintf( f, "extern uint32_t premodulated_audiotable[%d];\n\n", stride * AUDIO_LEVELS );
 	fclose( f );
 	
 	return 0;

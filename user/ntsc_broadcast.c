@@ -87,8 +87,11 @@ static int linescratch;
 uint16_t framebuffer[((FBW2/4)*(FBH))*2];
 
 const uint32_t * tablestart = &premodulated_table[0];
+const uint32_t * audiotablestart = &premodulated_audiotable[0];
 const uint32_t * tablept = &premodulated_table[0];
+const uint32_t * audiotablept = &premodulated_audiotable[0];
 const uint32_t * tableend = &premodulated_table[PREMOD_ENTRIES*PREMOD_SIZE];
+const uint32_t * audiotableend = &premodulated_table[PREMOD_ENTRIES*AUDIO_LEVELS];
 uint32_t * curdma;
 
 uint8_t pixline; //line number currently being written out.
@@ -100,14 +103,17 @@ LOCAL void fillwith( uint16_t qty, uint8_t color )
 	//We're using this one.
 	if( qty & 1 )
 	{
-		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
+		*(curdma++) = tablept[color] | *audiotablept; tablept += PREMOD_SIZE; audiotablept+=AUDIO_LEVELS;
 	}
 	qty>>=1;
 	for( linescratch = 0; linescratch < qty; linescratch++ )
 	{
-		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
-		*(curdma++) = tablept[color]; tablept += PREMOD_SIZE;
-		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
+		*(curdma++) = tablept[color] | *audiotablept; tablept += PREMOD_SIZE;audiotablept+=AUDIO_LEVELS;
+		*(curdma++) = tablept[color] | *audiotablept; tablept += PREMOD_SIZE;audiotablept+=AUDIO_LEVELS;
+		if( tablept >= tableend ) {
+			tablept = tablept - tableend + tablestart;
+			audiotablept = audiotablestart;
+		}
 	}
 }
 
@@ -192,11 +198,14 @@ LOCAL void FT_LIN()
 	{
 		uint16_t fbb;
 		fbb = fbs[linescratch];
-		*(curdma++) = tablept[(fbb>>0)&15];		tablept += PREMOD_SIZE;
-		*(curdma++) = tablept[(fbb>>4)&15];		tablept += PREMOD_SIZE;
-		*(curdma++) = tablept[(fbb>>8)&15];		tablept += PREMOD_SIZE;
-		*(curdma++) = tablept[(fbb>>12)&15];	tablept += PREMOD_SIZE;
-		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
+		*(curdma++) = tablept[(fbb>>0)&15] | *audiotablept;		tablept += PREMOD_SIZE;	audiotablept+=AUDIO_LEVELS;
+		*(curdma++) = tablept[(fbb>>4)&15] | *audiotablept;		tablept += PREMOD_SIZE;	audiotablept+=AUDIO_LEVELS;
+		*(curdma++) = tablept[(fbb>>8)&15] | *audiotablept;		tablept += PREMOD_SIZE;	audiotablept+=AUDIO_LEVELS;
+		*(curdma++) = tablept[(fbb>>12)&15] | *audiotablept;	tablept += PREMOD_SIZE;	audiotablept+=AUDIO_LEVELS;
+		if( tablept >= tableend ) {
+			tablept = tablept - tableend + tablestart;
+			audiotablept = audiotablestart;
+		}
 	}
 
 	fillwith( LINE32LEN - (HDR_SPD+FBW2), BLACK_LEVEL );
