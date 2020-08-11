@@ -1,6 +1,5 @@
 #include "3d.h"
 #include <stdio.h>
-#include "mystuff.h"
 
 #define m00 0
 #define m01 1

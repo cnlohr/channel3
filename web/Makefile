@@ -16,7 +16,7 @@ execute_reflash : execute_reflash.c md5.c
 	gcc -o $@ $^
 
 push : pushtodev page.mpfs
-	./pushtodev $(IP) 65536 page.mpfs
+	./pushtodev $(IP) 524288 page.mpfs
 
 clean :
 	rm -rf mfsmaker page.mpfs pushtodev execute_reflash

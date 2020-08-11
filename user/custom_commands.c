@@ -2,21 +2,12 @@
 
 #include <commonservices.h>
 #include <ntsc_broadcast.h>
-#include <mystuff.h>
+#include <esp82xxutil.h>
 #include "../tablemaker/broadcast_tables.h"
 
 extern uint8_t showstate;
 extern uint8_t showallowadvance;
 extern int8_t jam_color;
-
-void ICACHE_FLASH_ATTR ReinitSettings()
-{
-}
-
-void ICACHE_FLASH_ATTR SettingsLoaded()
-{
-}
-
 
 int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, unsigned short len)
 {

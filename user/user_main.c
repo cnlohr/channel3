@@ -1,13 +1,13 @@
 //Copyright 2015 <>< Charles Lohr, see LICENSE file.
 
+#include "uart.h"
 #include "mem.h"
 #include "c_types.h"
 #include "user_interface.h"
 #include "ets_sys.h"
-#include "driver/uart.h"
 #include "osapi.h"
 #include "espconn.h"
-#include "mystuff.h"
+#include "esp82xxutil.h"
 #include "ntsc_broadcast.h"
 #include "commonservices.h"
 #include <mdns.h>
@@ -18,23 +18,8 @@
 #define procTaskPrio        0
 #define procTaskQueueLen    1
 
-static volatile os_timer_t some_timer;
+static os_timer_t some_timer;
 static struct espconn *pUdpServer;
-
-
-//int ICACHE_FLASH_ATTR StartMDNS();
-
-void user_rf_pre_init(void)
-{
-	//nothing.
-}
-
-char * strcat( char * dest, char * src )
-{
-	return strcat(dest, src );
-}
-
-
 
 //Tasks that happen all the time.
 
@@ -49,6 +34,11 @@ void ICACHE_FLASH_ATTR SetupMatrix( )
 	Perspective( 600, 250, 50, 8192, ProjectionMatrix );
 }
 
+void user_pre_init(void)
+{
+	//You must load the partition table so the NONOS SDK can find stuff.
+	LoadDefaultPartitionMap();
+}
  
 
 #define INITIAL_SHOW_STATE 0
@@ -212,7 +202,7 @@ void ICACHE_FLASH_ATTR DrawFrame(  )
 		}
 		break;
 	case 5:
-		ets_memcpy( frontframe, framessostate*(FBW/8)+0x3FFF8000, ((FBW/4)*FBH) );
+		ets_memcpy( frontframe, (uint8_t*)(framessostate*(FBW/8)+0x3FFF8000), ((FBW/4)*FBH) );
 		CNFGColor( 17 );
 		CNFGTackRectangle( 70, 110, 180+200, 150 );		
 		CNFGColor( 16 );
@@ -360,9 +350,7 @@ void ICACHE_FLASH_ATTR charrx( uint8_t c )
 void ICACHE_FLASH_ATTR user_init(void)
 {
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
-
 	uart0_sendStr("\r\nesp8266 ws2812 driver\r\n");
-
 //	int opm = wifi_get_opmode();
 //	if( opm == 1 ) need_to_switch_opmode = 120;
 //	wifi_set_opmode_current(2);
@@ -419,7 +407,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 		while(1) { uart0_sendStr( "\r\nFAULT\r\n" ); }
 	}
 
-	CSInit();
+	CSInit(1);
 
 	SetServiceName( "ws2812" );
 	AddMDNSName( "cn8266" );

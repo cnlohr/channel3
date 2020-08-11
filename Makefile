@@ -1,99 +1,26 @@
-FW_FILE_1:=image.elf-0x00000.bin
-FW_FILE_2:=image.elf-0x40000.bin
-TARGET_OUT:=image.elf
-all : $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
+include user.cfg
+-include esp82xx/common.mf
+-include esp82xx/main.mf
 
+% :
+	$(warning This is the empty rule. Something went wrong.)
+	@true
 
-SRCS:=driver/uart.c \
-	common/http.c \
-	common/mystuff.c \
-	common/flash_rewriter.c \
-	common/commonservices.c \
-	common/http_custom.c \
-	common/mdns.c \
-	common/mfs.c \
-	user/custom_commands.c \
+ifndef TARGET
+$(info Modules were not checked out... use git clone --recursive in the future. Pulling now.)
+$(shell git submodule update --init --recursive)
+endif
+
+SRCS+= \
 	user/ntsc_broadcast.c \
-	user/user_main.c \
 	user/3d.c \
 	tablemaker/broadcast_tables.c \
 	tablemaker/CbTable.c
 
-GCC_FOLDER:=~/esp8266/esp-open-sdk/xtensa-lx106-elf
-ESPTOOL_PY:=~/esp8266/esptool/esptool.py
-SDK:=/home/cnlohr/esp8266/esp_iot_sdk_v1.5.2
-PORT:=/dev/ttyUSB0
-#PORT:=/dev/ttyACM0
-
-XTLIB:=$(SDK)/lib
-XTGCCLIB:=$(GCC_FOLDER)/lib/gcc/xtensa-lx106-elf/4.8.5/libgcc.a
-FOLDERPREFIX:=$(GCC_FOLDER)/bin
-CC:=$(FOLDERPREFIX)/$(PREFIX)gcc
-PREFIX:=$(FOLDERPREFIX)/xtensa-lx106-elf-
-
-CFLAGS:=-mlongcalls -I$(SDK)/include -Imyclib -Iinclude -Iuser -Os -I$(SDK)/include/ -Icommon -DICACHE_FLASH
-
-#	-Wl,--gc-sections \
-#	-Wl,--relax  \
-#	-flto \
-
-LDFLAGS_CORE:=\
-	-nostdlib \
-	-L$(XTLIB) \
-	-L$(XTGCCLIB) \
-	-g \
-	$(SDK)/lib/libmain.a \
-	$(SDK)/lib/libpp.a \
-	$(SDK)/lib/libnet80211.a \
-	$(SDK)/lib/libwpa.a \
-	$(SDK)/lib/liblwip.a \
-	$(SDK)/lib/libssl.a \
-	$(SDK)/lib/libupgrade.a \
-	$(SDK)/lib/libnet80211.a \
-	$(SDK)/lib/liblwip.a \
-	$(SDK)/lib/libphy.a \
-	$(SDK)/lib/libcrypto.a \
-	$(XTGCCLIB) \
-	-T $(SDK)/ld/eagle.app.v6.ld
-
-LINKFLAGS:= \
-	$(LDFLAGS_CORE) \
-	-B$(XTLIB)
-
-#image.elf : $(OBJS)
-#	$(PREFIX)ld $^ $(LDFLAGS) -o $@
-
-$(TARGET_OUT) : $(SRCS)
-	echo $$PATH
-	$(PREFIX)gcc $(CFLAGS) $^  $(LINKFLAGS) -o $@
-	nm -S -n $(TARGET_OUT) > image.map
-	$(PREFIX)objdump -S $@ > image.lst
-
-$(FW_FILE_1): $(TARGET_OUT)
-	@echo "FW $@"
-	PATH=$(FOLDERPREFIX):$$PATH;$(ESPTOOL_PY) elf2image $(TARGET_OUT)
-
-$(FW_FILE_2): $(TARGET_OUT)
-	@echo "FW $@"
-	PATH=$(FOLDERPREFIX):$$PATH;$(ESPTOOL_PY) elf2image $(TARGET_OUT)
-
-burn : $(FW_FILE_1) $(FW_FILE_2)
-	($(ESPTOOL_PY) -b 2000000 --port $(PORT) write_flash 0x00000 image.elf-0x00000.bin 0x40000 image.elf-0x40000.bin)||(true)
-
-#If you have space, MFS should live at 0x100000, if you don't it can also live at
-#0x10000.  But, then it is limited to 180kB.  You might need to do this if you have a 512kB 
-#ESP variant.
-
-burnweb : web/page.mpfs
-	($(ESPTOOL_PY) --port $(PORT) write_flash 0x10000 web/page.mpfs)||(true)
-
-
-IP?=192.168.4.1
-
-netburn : image.elf $(FW_FILE_1) $(FW_FILE_2)
-	web/execute_reflash $(IP) image.elf-0x00000.bin image.elf-0x40000.bin
-
-clean :
-	rm -rf user/*.o driver/*.o $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
-
+# Example for a custom rule.
+# Most of the build is handled in main.mf
+.PHONY : showvars
+showvars:
+	$(foreach v, $(.VARIABLES), $(info $(v) = $($(v))))
+	true
 

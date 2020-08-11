@@ -1,6 +1,6 @@
 #include <c_types.h>
 
-#include <mystuff.h>
+#include <esp82xxutil.h>
 
 #define PREMOD_ENTRIES 44
 #define PREMOD_ENTRIES_WITH_SPILL 51

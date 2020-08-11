@@ -37,13 +37,14 @@ Extra copyright info:
 
 
 #include "slc_register.h"
-#include "mystuff.h"
+#include "esp82xxutil.h"
 #include <c_types.h>
 #include "ntsc_broadcast.h"
 #include "user_interface.h"
-#include "pin_mux_register.h"
 #include "../tablemaker/broadcast_tables.h"
 #include <dmastuff.h>
+
+#define FUNC_I2SO_DATA                      1
 
 #define WS_I2S_BCK 1  //Can't be less than 1.
 #define WS_I2S_DIV 2
@@ -226,7 +227,7 @@ LOCAL void FT_CLOSE_M()
 
 void (*CbTable[FT_MAX_d])() = { FT_STA, FT_STB, FT_B, FT_SRA, FT_SRB, FT_LIN, FT_CLOSE_M };
 
-LOCAL void slc_isr(void) {
+void slc_isr(void * v) {
 	//portBASE_TYPE HPTaskAwoken=0;
 	struct sdio_queue *finishedDesc;
 	uint32 slc_intr_status;
@@ -314,7 +315,7 @@ void ICACHE_FLASH_ATTR testi2s_init() {
 	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&i2sBufDesc[0]) & SLC_RXLINK_DESCADDR_MASK);
 
 	//Attach the DMA interrupt
-	ets_isr_attach(ETS_SLC_INUM, slc_isr);
+	ets_isr_attach(ETS_SLC_INUM, slc_isr, 0);
 	//Enable DMA operation intr
 	WRITE_PERI_REG(SLC_INT_ENA,  SLC_RX_EOF_INT_ENA);
 	//clear any interrupt flags that are set
