@@ -15,7 +15,8 @@
 int main()
 {
 
-	uint8_t CbLookup[NTSC_LINES];
+	uint8_t CbLookup[NTSC_LINES+1]; //Because we're odd, we have to extend this by one byte.
+	memset( CbLookup, 0, sizeof(CbLookup) );
 	int x;
 	//Setup the callback table.
 	for( x = 0; x < 3; x++ )

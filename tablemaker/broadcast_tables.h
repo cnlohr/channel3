@@ -8,5 +8,8 @@
 #define SYNC_LEVEL 17
 #define COLORBURST_LEVEL 16
 #define BLACK_LEVEL 0
+#define GRAY_LEVEL 1
+#define WHITE_LEVEL 10
+
 extern uint32_t premodulated_table[918];
 

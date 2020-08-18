@@ -41,6 +41,8 @@ void user_pre_init(void)
 }
  
 
+//0 is the normal flow
+//11 is the multi-panel scene.
 #define INITIAL_SHOW_STATE 0
 
 extern int gframe;

@@ -85,11 +85,11 @@ int main()
 	double t = 0;	//In ns.
 	int debug = 0;
 
-	WriteSignal( 1.0, 0.0, 0.6, 0.0, debug, &databuffer[stride*0], 0xffffffff ); //Black.  //-18.1 db
+	WriteSignal( 1.0, 0.0, 0.7, 0.0, debug, &databuffer[stride*0], 0xffffffff ); //Black.  //-18.1 db
 	WriteSignal( 1.0, 0.0, 1.0, 0.0, debug, &databuffer[stride*2], 0xffff0000 ); //White
-	WriteSignal( 1.0, 0.0, 0.6, 0.0, debug, &databuffer[stride*2], 0x0000ffff ); //Black.  //-18.1 db
+	WriteSignal( 1.0, 0.0, 0.7, 0.0, debug, &databuffer[stride*2], 0x0000ffff ); //Black.  //-18.1 db
 	WriteSignal( 1.0, 0.0, 1.0, 0.0, debug, &databuffer[stride*8], 0x0000ffff ); //White
-	WriteSignal( 1.0, 0.0, 0.6, 0.0, debug, &databuffer[stride*8], 0xffff0000 ); //Black.  //-18.1 db
+	WriteSignal( 1.0, 0.0, 0.7, 0.0, debug, &databuffer[stride*8], 0xffff0000 ); //Black.  //-18.1 db
 	WriteSignal( 1.0, 0.0, 1.0, 0.0, debug, &databuffer[stride*10], 0xffffffff ); //White
 //BLACK
 	WriteSignal( 1.0, 0.0, 0.85, 0.0, debug, &databuffer[stride*1], 0xffffffff );  //GRAY
@@ -100,7 +100,7 @@ int main()
 	WriteSignal( 0.7, 1.0, 0.9, 0.6, debug, &databuffer[stride*6], 0xffffffff ); 
 	WriteSignal( 0.7, 1.0, 0.9, 0.8, debug, &databuffer[stride*7], 0xffffffff ); 
 //WTB
-	WriteSignal( 0.4, 0.5, 0.5, 0.0, debug, &databuffer[stride*9], 0xffffffff ); 
+	WriteSignal( 0.4, 0.5, 0.65, 0.0, debug, &databuffer[stride*9], 0xffffffff ); 
 //WHITE
 	WriteSignal( 0.5, 0.5, 0.8, 0.0, debug, &databuffer[stride*11], 0xffffffff ); 
 	WriteSignal( 0.5, 0.5, 0.8, 0.2, debug, &databuffer[stride*12], 0xffffffff ); 
@@ -132,7 +132,7 @@ int main()
 
 	f = fopen( "broadcast_tables.h", "w" );
 	fprintf( f, "#include <c_types.h>\n\n" );
-	fprintf( f, "#include <mystuff.h>\n\n" );
+	fprintf( f, "#include <esp82xxutil.h>\n\n" );
 
 	fprintf( f, "#define PREMOD_ENTRIES %d\n", samples/32 );
 	fprintf( f, "#define PREMOD_ENTRIES_WITH_SPILL %d\n", (samples+overshoot)/32 );
@@ -140,6 +140,9 @@ int main()
 	fprintf( f, "#define SYNC_LEVEL 17\n" );
 	fprintf( f, "#define COLORBURST_LEVEL 16\n" );
 	fprintf( f, "#define BLACK_LEVEL 0\n" );
+	fprintf( f, "#define GRAY_LEVEL 1\n" );
+	fprintf( f, "#define WHITE_LEVEL 10\n" );
+	fprintf( f, "\n" );
 	fprintf( f, "extern uint32_t premodulated_table[%d];\n\n", stride * TABLESIZE );
 	fclose( f );
 	

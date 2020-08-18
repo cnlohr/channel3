@@ -134,12 +134,15 @@ LOCAL void FT_STB()
 	fillwith( LINE32LEN - (68+11+68), BLACK_LEVEL );
 }
 
+//Margin at top and bottom of screen (Mostly invisible)
+//Closed Captioning would go somewhere in here, I guess?
 LOCAL void FT_B()
 {
 	fillwith( 12, SYNC_LEVEL );
 	fillwith( 2, BLACK_LEVEL );
 	fillwith( 4, COLORBURST_LEVEL );
-	fillwith( LINE32LEN-12-6, BLACK_LEVEL );
+	fillwith( LINE32LEN-12-6, (pixline<1)?GRAY_LEVEL:WHITE_LEVEL );
+	//Gray seems to help sync if at top.  TODO: Investigate if white works even better!
 }
 
 LOCAL void FT_SRA()
@@ -164,7 +167,7 @@ LOCAL void FT_LIN()
 	fillwith( 12, SYNC_LEVEL );
 	fillwith( 1, BLACK_LEVEL );
 	fillwith( 7, COLORBURST_LEVEL );
-	fillwith( 11, BLACK_LEVEL );
+	fillwith( 11, WHITE_LEVEL );
 #define HDR_SPD (12+1+7+11)
 
 	int fframe = gframe & 1;
@@ -200,7 +203,7 @@ LOCAL void FT_LIN()
 		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
 	}
 
-	fillwith( LINE32LEN - (HDR_SPD+FBW2), BLACK_LEVEL );
+	fillwith( LINE32LEN - (HDR_SPD+FBW2), WHITE_LEVEL );
 #endif
 
 	pixline++;
@@ -214,7 +217,7 @@ LOCAL void FT_CLOSE_M()
 	fillwith( 12, SYNC_LEVEL );
 	fillwith( 2, BLACK_LEVEL );
 	fillwith( 4, COLORBURST_LEVEL );
-	fillwith( LINE32LEN-12-6, BLACK_LEVEL );
+	fillwith( LINE32LEN-12-6, WHITE_LEVEL );
 	gline = -1;
 	gframe++;
 
