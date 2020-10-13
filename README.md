@@ -52,6 +52,8 @@ It also has an interactive Javascript webworker system that lets you write code 
 
 You should only output -1 or +1 as that is all the ESP can output.  It will then run a DFT with a randomized window over a frequency area you choose.  Increase the DFT window, and it will increase your q (or precision).  Decrease, it decreases your q.  This is to help see how receivers like the TV really understand the signal and help illustrate how wacky this really is.
 
+You can try it in your own browser using this link: http://cnlohr.github.io/channel3/web/page/index.html  Click NTSC and go to town.
+
 ## Rawdraw and 3D
 
 For all the 3D and text, I'm using a new modified version of my "rawdraw" library ( http://github.com/cnlohr/rawdraw ) for 3D I'm using fixed point numbers, with 256 as the unit value, and the bottom 8 bits are the fractional component.
