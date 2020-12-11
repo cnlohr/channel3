@@ -130,7 +130,7 @@ int ICACHE_FLASH_ATTR issue_command(char * buffer, int retsize, char *pusrdata, 
 	case 'b': case 'B': //Browse request
 		//Format is
 		//User:
-		//	BS[service name]: Start seearch for service
+		//	BS[service name]: Start search for service
 		//	BL: List all services that have been found.
 		//Internally:
 		//   BQ[service name], service name may not exist for wild card.
