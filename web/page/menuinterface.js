@@ -338,49 +338,60 @@ var lastpeerdata = "";
 
 function CallbackForPeers(req,data)
 {
-	if( data == lastpeerdata ) return;
-	lastpeerdata = data;
-	var lines = data.split( "\n" );
-	var searchcount = 0;
-	if( lines.length > 0 )
-	{
-		var line1 = lines[0].split( "\t" );
-		if( line1.length > 1 ) searchcount = Number( line1[1] );
-	}
+	var blobReader = new FileReader(); 
+	blobReader.addEventListener("loadend", (e) => { 
+		data = e.srcElement.result; 
+		console.log(data)
 
-	var htm = "<TABLE BORDER=1 STYLE='width:150'><TR><TH>Address</TH><TH>Service</TH><TH>Name</TH><TH>Description</TH></TR>";
-	for( var i = 1; i < lines.length; i++ )
-	{
-		var elems = lines[i].split( "\t" );
-		if( elems.length < 4 ) continue;
-		IP = HexToIP( elems[0] );
+		if( data == lastpeerdata ) return;
+		lastpeerdata = data;
+		var lines = data.split( "\n" );
+		var searchcount = 0;
+		if( lines.length > 0 )
+		{
+			var line1 = lines[0].split( "\t" );
+			if( line1.length > 1 ) searchcount = Number( line1[1] );
+		}
 
-		htm += "<TR><TD><A HREF=http://" + IP + ">" + IP + "</A></TD><TD>" + elems[1] + "</TD><TD>" + elems[2] + "</TD><TD>" + elems[3] + "</TD></TR>";
-	}
-	htm += "</TABLE>";
-	if( searchcount == 0 )
-	{
-		htm += "<INPUT TYPE=SUBMIT VALUE=\"Initiate Search\" ONCLICK='QueueOperation(\"BS\");'>";
-	}
+		var htm = "<TABLE BORDER=1 STYLE='width:150'><TR><TH>Address</TH><TH>Service</TH><TH>Name</TH><TH>Description</TH></TR>";
+		for( var i = 1; i < lines.length; i++ )
+		{
+			var elems = lines[i].split( "\t" );
+			if( elems.length < 4 ) continue;
+			IP = HexToIP( elems[0] );
 
-	$("#peers").html( htm );
+			htm += "<TR><TD><A HREF=http://" + IP + ">" + IP + "</A></TD><TD>" + elems[1] + "</TD><TD>" + elems[2] + "</TD><TD>" + elems[3] + "</TD></TR>";
+		}
+		htm += "</TABLE>";
+		if( searchcount == 0 )
+		{
+			htm += "<INPUT TYPE=SUBMIT VALUE=\"Initiate Search\" ONCLICK='QueueOperation(\"BS\");'>";
+		}
+
+		$("#peers").html( htm );
+	}); blobReader.readAsText(data)
 }
 
 function SysTickBack(req,data)
 {
-	var params = data.split( "\t" );
-	if( !snchanged )
-	{
-		$("#SystemName").prop( "value", params[3] );
-		$("#SystemName").removeClass( "unsaved-input");
-	}
-	if( !sdchanged )
-	{
-		$("#SystemDescription").prop( "value", params[4] );
-		$("#SystemDescription").removeClass( "unsaved-input");
-	}
-	
-	QueueOperation( "BL", CallbackForPeers );
+	var blobReader = new FileReader(); 
+	blobReader.addEventListener("loadend", (e) => { 
+		data = e.srcElement.result; 
+		console.log(data)
+		var params = data.split( "\t" );
+		if( !snchanged )
+		{
+			$("#SystemName").prop( "value", params[3] );
+			$("#SystemName").removeClass( "unsaved-input");
+		}
+		if( !sdchanged )
+		{
+			$("#SystemDescription").prop( "value", params[4] );
+			$("#SystemDescription").removeClass( "unsaved-input");
+		}
+		
+		QueueOperation( "BL", CallbackForPeers );
+	}); blobReader.readAsText(data)
 }
 
 function SystemInfoTick()
@@ -486,6 +497,11 @@ function WifiDataTicker()
 		{
 			QueueOperation( "WI", function(req,data)
 			{
+			var blobReader = new FileReader(); 
+blobReader.addEventListener("loadend", (e) => { 
+	data = e.srcElement.result; 
+	console.log(data)
+
 				var params = data.split( "\t" );
 			
 				var opmode = Number( params[0].substr(2) );
@@ -497,42 +513,47 @@ function WifiDataTicker()
 
 				ClickOpmode( opmode );
 				did_wifi_get_config = true;
+				}); blobReader.readAsText(data)
 			} );
 		}
 
 		QueueOperation( "WR", function(req,data) {
-			var lines = data.split( "\n" );
-			var innerhtml;
+			var blobReader = new FileReader(); 
+			blobReader.addEventListener("loadend", (e) => { 
+				data = e.srcElement.result; 
+				var lines = data.split( "\n" );
+				var innerhtml;
 
-			if( lines.length < 3 )
-			{
-				innerhtml = "No APs found.  Did you scan?";
-				if( is_waiting_on_stations )
+				if( lines.length < 3 )
 				{
-					IssueSystemMessage( "No APs found." );
-					is_waiting_on_stations = false;
+					innerhtml = "No APs found.  Did you scan?";
+					if( is_waiting_on_stations )
+					{
+						IssueSystemMessage( "No APs found." );
+						is_waiting_on_stations = false;
+					}
 				}
-			}
-			else
-			{
-				if( is_waiting_on_stations )
+				else
 				{
-					IssueSystemMessage( "Scan Complete." );
-					is_waiting_on_stations = false;
-				}
+					if( is_waiting_on_stations )
+					{
+						IssueSystemMessage( "Scan Complete." );
+						is_waiting_on_stations = false;
+					}
 
-				innerhtml = "<TABLE border=1><TR><TH>SSID</TH><TH>MAC</TH><TH>RS</TH><TH>Ch</TH><TH>Enc</TH></TR>"
-				wifilines = [];
-				for( i = 1; i < lines.length-1; i++ )
-				{
-					tlines = lines[i].split( "\t" );
-					wifilines.push(tlines);
-					var bssidval = "<a href='javascript:void(0);' onclick='return BSSIDClick(" + (i -1 )+ ")'>" + tlines[1];
-					innerhtml += "<TR><TD>" + tlines[0].substr(1) + "</TD><TD>" + bssidval + "</TD><TD>" + tlines[2] + "</TD><TD>" + tlines[3] + "</TD><TD>" + tlines[4] + "</TD></TR>";
+					innerhtml = "<TABLE border=1><TR><TH>SSID</TH><TH>MAC</TH><TH>RS</TH><TH>Ch</TH><TH>Enc</TH></TR>"
+					wifilines = [];
+					for( i = 1; i < lines.length-1; i++ )
+					{
+						tlines = lines[i].split( "\t" );
+						wifilines.push(tlines);
+						var bssidval = "<a href='javascript:void(0);' onclick='return BSSIDClick(" + (i -1 )+ ")'>" + tlines[1];
+						innerhtml += "<TR><TD>" + tlines[0].substr(1) + "</TD><TD>" + bssidval + "</TD><TD>" + tlines[2] + "</TD><TD>" + tlines[3] + "</TD><TD>" + tlines[4] + "</TD></TR>";
+					}
 				}
-			}
-			innerhtml += "</TABLE>";
-			document.getElementById("WifiStations").innerHTML = innerhtml;
+				innerhtml += "</TABLE>";
+				document.getElementById("WifiStations").innerHTML = innerhtml;
+			}); blobReader.readAsText(data)
 		} );
 		setTimeout( WifiDataTicker, 500 );
 	}
