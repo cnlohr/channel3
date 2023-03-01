@@ -1,7 +1,7 @@
 //Copyright 2015 <>< Charles Lohr, see LICENSE file.
 
 #include <commonservices.h>
-#include <ntsc_broadcast.h>
+#include <video_broadcast.h>
 #include <esp82xxutil.h>
 #include "../tablemaker/broadcast_tables.h"
 

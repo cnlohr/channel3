@@ -1,6 +1,7 @@
 /******************************************************************************
  * Copyright 2013-2015 Espressif Systems
  *           2015 <>< Charles Lohr
+ * 			 2022 Paul Schlarmann
  *
  * FileName: i2s_freertos.c
  *
@@ -11,6 +12,7 @@
  *     2015/06/01, v1.0 File created.
  *     2015/07/23, Switch to making it a WS2812 output device.
  *     2016/01/28, Modified to re-include TX_ stuff.
+ *     2022/09/26, Modified CNLohrs code to also allow PAL broadcast
 *******************************************************************************
 
 Notes:
@@ -39,7 +41,7 @@ Extra copyright info:
 #include "slc_register.h"
 #include "esp82xxutil.h"
 #include <c_types.h>
-#include "ntsc_broadcast.h"
+#include "video_broadcast.h"
 #include "user_interface.h"
 #include "../tablemaker/broadcast_tables.h"
 #include <dmastuff.h>
@@ -49,7 +51,30 @@ Extra copyright info:
 #define WS_I2S_BCK 1  //Can't be less than 1.
 #define WS_I2S_DIV 2
 
-#define I2SDMABUFLEN (159)		//Length of one buffer, in 32-bit words.
+#ifdef PAL
+  #define LINE_BUFFER_LENGTH 160
+
+  /* PAL signals */
+  #define SHORT_SYNC_INTERVAL    5
+  #define LONG_SYNC_INTERVAL    75
+  #define NORMAL_SYNC_INTERVAL  10
+  #define LINE_SIGNAL_INTERVAL 150
+
+  #define COLORBURST_INTERVAL 10
+#else
+  #define LINE_BUFFER_LENGTH 159
+
+  /* NTSC signals */
+  #define SHORT_SYNC_INTERVAL    6
+  #define LONG_SYNC_INTERVAL    73
+  #define SERRATION_PULSE_INT   67
+  #define NORMAL_SYNC_INTERVAL  12
+  #define LINE_SIGNAL_INTERVAL 147
+
+  #define COLORBURST_INTERVAL 4
+#endif
+
+#define I2SDMABUFLEN (LINE_BUFFER_LENGTH)		//Length of one buffer, in 32-bit words.
 //#define LINE16LEN (I2SDMABUFLEN*2)
 #define LINE32LEN I2SDMABUFLEN
 
@@ -115,60 +140,77 @@ LOCAL void fillwith( uint16_t qty, uint8_t color )
 
 //XXX TODO: Revisit the length of time the system is at SYNC, BLACK, etc.
 
-LOCAL void FT_STA()
+LOCAL void FT_STA() // Short Sync
 {
 	pixline = 0; //Reset the framebuffer out line count (can be done multiple times)
 
-	fillwith( 6, SYNC_LEVEL );
-	fillwith( 73, BLACK_LEVEL );
-	fillwith( 6, SYNC_LEVEL );
-	fillwith( LINE32LEN - (6+73+6), BLACK_LEVEL );
+	fillwith( SHORT_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LONG_SYNC_INTERVAL, BLACK_LEVEL );
+	fillwith( SHORT_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LINE32LEN - (SHORT_SYNC_INTERVAL+LONG_SYNC_INTERVAL+SHORT_SYNC_INTERVAL), BLACK_LEVEL );
 }
 
 
-LOCAL void FT_STB()
+LOCAL void FT_STB() // Long Sync
 {
-	fillwith( 68, SYNC_LEVEL );
-	fillwith( 11, BLACK_LEVEL );
-	fillwith( 68, SYNC_LEVEL );
-	fillwith( LINE32LEN - (68+11+68), BLACK_LEVEL );
+	#ifdef PAL
+		#define FT_STB_BLACK_INTERVAL SHORT_SYNC_INTERVAL
+	#else
+		#define FT_STB_BLACK_INTERVAL NORMAL_SYNC_INTERVAL
+	#endif
+	fillwith( LONG_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( FT_STB_BLACK_INTERVAL, BLACK_LEVEL );
+	fillwith( LONG_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LINE32LEN - (LONG_SYNC_INTERVAL+FT_STB_BLACK_INTERVAL+LONG_SYNC_INTERVAL), BLACK_LEVEL );
 }
 
 //Margin at top and bottom of screen (Mostly invisible)
 //Closed Captioning would go somewhere in here, I guess?
-LOCAL void FT_B()
+LOCAL void FT_B() // Black
 {
-	fillwith( 12, SYNC_LEVEL );
+	fillwith( NORMAL_SYNC_INTERVAL, SYNC_LEVEL );
 	fillwith( 2, BLACK_LEVEL );
-	fillwith( 4, COLORBURST_LEVEL );
-	fillwith( LINE32LEN-12-6, (pixline<1)?GRAY_LEVEL:WHITE_LEVEL );
+	fillwith( COLORBURST_INTERVAL, COLORBURST_LEVEL );
+	fillwith( LINE32LEN-NORMAL_SYNC_INTERVAL-2-COLORBURST_INTERVAL, (pixline<1)?GRAY_LEVEL:BLACK_LEVEL);
 	//Gray seems to help sync if at top.  TODO: Investigate if white works even better!
 }
 
-LOCAL void FT_SRA()
+LOCAL void FT_SRA() // Short to long
 {
-	fillwith( 6, SYNC_LEVEL );
-	fillwith( 73, BLACK_LEVEL );
-	fillwith( 68, SYNC_LEVEL );
-	fillwith( LINE32LEN - (6+73+68), BLACK_LEVEL );
+	fillwith( SHORT_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LONG_SYNC_INTERVAL, BLACK_LEVEL );
+	#ifdef PAL
+	fillwith( LONG_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LINE32LEN - (SHORT_SYNC_INTERVAL+LONG_SYNC_INTERVAL+LONG_SYNC_INTERVAL), BLACK_LEVEL );
+	#else
+	fillwith( SERRATION_PULSE_INT, SYNC_LEVEL );
+	fillwith( LINE32LEN - (SHORT_SYNC_INTERVAL+LONG_SYNC_INTERVAL+SERRATION_PULSE_INT), BLACK_LEVEL );
+	#endif
 }
 
-LOCAL void FT_SRB()
+LOCAL void FT_SRB() // Long to short
 {
-	fillwith( 68, SYNC_LEVEL );
-	fillwith( 11, BLACK_LEVEL );
-	fillwith( 6, SYNC_LEVEL );
-	fillwith( LINE32LEN - (6+11+68), BLACK_LEVEL );
+	#ifdef PAL
+	fillwith( LONG_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( SHORT_SYNC_INTERVAL, BLACK_LEVEL );
+	fillwith( SHORT_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LINE32LEN - (LONG_SYNC_INTERVAL+SHORT_SYNC_INTERVAL+SHORT_SYNC_INTERVAL), BLACK_LEVEL );
+	#else
+	fillwith( SERRATION_PULSE_INT, SYNC_LEVEL );
+	fillwith( NORMAL_SYNC_INTERVAL, BLACK_LEVEL );
+	fillwith( SHORT_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LINE32LEN - (SERRATION_PULSE_INT+NORMAL_SYNC_INTERVAL+SHORT_SYNC_INTERVAL), BLACK_LEVEL );
+	#endif
 }
 
-LOCAL void FT_LIN()
+LOCAL void FT_LIN() // Line Signal
 {
 	//TODO: Make this do something useful.
-	fillwith( 12, SYNC_LEVEL );
+	fillwith( NORMAL_SYNC_INTERVAL, SYNC_LEVEL );
 	fillwith( 1, BLACK_LEVEL );
-	fillwith( 7, COLORBURST_LEVEL );
-	fillwith( 11, WHITE_LEVEL );
-#define HDR_SPD (12+1+7+11)
+	fillwith( COLORBURST_INTERVAL, COLORBURST_LEVEL );
+	fillwith( 11, BLACK_LEVEL );
+#define HDR_SPD (NORMAL_SYNC_INTERVAL+1+COLORBURST_INTERVAL+11)
 
 	int fframe = gframe & 1;
 //#define FILLTEST
@@ -203,7 +245,7 @@ LOCAL void FT_LIN()
 		if( tablept >= tableend ) tablept = tablept - tableend + tablestart;
 	}
 
-	fillwith( LINE32LEN - (HDR_SPD+FBW2), WHITE_LEVEL );
+	fillwith( LINE32LEN - (HDR_SPD+FBW2), BLACK_LEVEL); //WHITE_LEVEL );
 #endif
 
 	pixline++;
@@ -212,12 +254,19 @@ LOCAL void FT_LIN()
 static uint32_t systimex = 0;
 static uint32_t systimein = 0;
 uint32_t last_internal_frametime;
-LOCAL void FT_CLOSE_M()
+LOCAL void FT_CLOSE_M() // End Frame
 {
-	fillwith( 12, SYNC_LEVEL );
+	#ifdef PAL
+	fillwith( SHORT_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LONG_SYNC_INTERVAL, BLACK_LEVEL );
+	fillwith( SHORT_SYNC_INTERVAL, SYNC_LEVEL );
+	fillwith( LINE32LEN - (SHORT_SYNC_INTERVAL+LONG_SYNC_INTERVAL+SHORT_SYNC_INTERVAL), BLACK_LEVEL );
+	#else
+	fillwith( NORMAL_SYNC_INTERVAL, SYNC_LEVEL );
 	fillwith( 2, BLACK_LEVEL );
 	fillwith( 4, COLORBURST_LEVEL );
-	fillwith( LINE32LEN-12-6, WHITE_LEVEL );
+	fillwith( LINE32LEN-NORMAL_SYNC_INTERVAL-6, WHITE_LEVEL );
+	#endif
 	gline = -1;
 	gframe++;
 

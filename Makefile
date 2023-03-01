@@ -12,7 +12,7 @@ $(shell git submodule update --init --recursive)
 endif
 
 SRCS+= \
-	user/ntsc_broadcast.c \
+	user/video_broadcast.c \
 	user/3d.c \
 	tablemaker/broadcast_tables.c \
 	tablemaker/CbTable.c

@@ -22,7 +22,7 @@ This is basically a 1-bit dithering DAC, operating at a frequency below the nyqu
 
 Tables for handling the line-buffer state machine are (generated/stored?) in MayCbTables.h/c, and similar tables for creating the on-wire signal encoding are in synthtables.c.
 
-Functions to set up the DMA transfers, refill the buffers when they become empty, and change what kind of line should be sent based on the framebuffer contents are in ntsc_broadcast.c. These functions handle all of the modulation.  This sets up the DMA, and an interrupt that is called when the DMA finishes a block (equal to one line).  Upon completion, it uses CbTable to decide what function to call to fill in the line.  The interrupt fills out the next line for DMA which keeps going.
+Functions to set up the DMA transfers, refill the buffers when they become empty, and change what kind of line should be sent based on the framebuffer contents are in video_broadcast.c. These functions handle all of the modulation.  This sets up the DMA, and an interrupt that is called when the DMA finishes a block (equal to one line).  Upon completion, it uses CbTable to decide what function to call to fill in the line.  The interrupt fills out the next line for DMA which keeps going.
 
 The framebuffer is updated by various demo screens located in user_main.c.
 
@@ -57,6 +57,11 @@ You can try it in your own browser using this link: http://cnlohr.github.io/chan
 ## Rawdraw and 3D
 
 For all the 3D and text, I'm using a new modified version of my "rawdraw" library ( http://github.com/cnlohr/rawdraw ) for 3D I'm using fixed point numbers, with 256 as the unit value, and the bottom 8 bits are the fractional component.
+
+## PAL Modification
+To allow for PAL broadcasts, the timings in the video_broadcast-library (formerly ntsc_broadcast) were modified. Since I only wanted to use this with a black an white TV, and PAL colour is actually quite complicated to do digitally, I didn't modify the broadcast_tables (synthtables.c). So the library broadcasts a PAL compliant B/W-Signal with NTSC Colour information (kind of like NTSC50).
+
+To enable PAL broadcasting you need to enable ```OPTS += -DPAL``` in user.cfg. 
 
 ## Youtube video
 

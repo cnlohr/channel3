@@ -5,7 +5,7 @@
 #include "c_types.h"
 #include "user_interface.h"
 #include "ets_sys.h"
-#include "ntsc_broadcast.h"
+#include "video_broadcast.h"
 
 extern int gframe;
 extern uint8_t * frontframe;

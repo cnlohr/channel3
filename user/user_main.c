@@ -8,7 +8,7 @@
 #include "osapi.h"
 #include "espconn.h"
 #include "esp82xxutil.h"
-#include "ntsc_broadcast.h"
+#include "video_broadcast.h"
 #include "commonservices.h"
 #include <mdns.h>
 #include "3d.h"

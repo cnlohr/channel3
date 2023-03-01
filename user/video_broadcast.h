@@ -1,10 +1,11 @@
 //Copyright 2016 <>< Charles Lohr, See LICENSE file.
+// COPYRIGHT 2022 Paul Schlarmann
 
-#ifndef _NTSC_BROADCAST_TEST
-#define _NTSC_BROADCAST_TEST
+#ifndef _VIDEO_BROADCAST_TEST
+#define _VIDEO_BROADCAST_TEST
 
 /*
-	This is the NTSC Broadcast code.  To set it up, call testi2s_init.
+	This is the Video Broadcast code.  To set it up, call testi2s_init.
 	This will set up the DMA engine and all the chains for outputting 
 	broadcast.
 
@@ -22,7 +23,11 @@
 //Framebuffer width/height
 #define FBW 232 //Must be divisible by 8.  These are actually "double-pixels" used for double-resolution monochrome width.
 #define FBW2 (FBW/2) //Actual width in true pixels.
+#ifdef PAL
+#define FBH 264
+#else
 #define FBH 220
+#endif
 
 #define DMABUFFERDEPTH 3
 
