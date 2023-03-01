@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#define PAL_LINES 625
 #define NTSC_LINES 525
 
 #define FT_STA_d 0
@@ -14,45 +15,89 @@
 
 int main()
 {
+// PAL
+	//Because we're odd, we have to extend this by one byte.
+	uint8_t CbLookupPAL[PAL_LINES+1]; 
+	memset( CbLookupPAL, 0, sizeof(CbLookupPAL) );
+	int x = 0;
 
-	uint8_t CbLookup[NTSC_LINES+1]; //Because we're odd, we have to extend this by one byte.
-	memset( CbLookup, 0, sizeof(CbLookup) );
-	int x;
+	#define OVERSCAN_TOP 30
+	#define OVERSCAN_BOT 10
+	
+	//Setup the callback table.
+	for( x = 0; x < 2; x++ )
+		CbLookupPAL[x] = FT_STB_d;
+	CbLookupPAL[x++] = FT_SRB_d;
+	for( ; x < 5; x++ )
+		CbLookupPAL[x] = FT_STA_d;
+
+	for( ; x < 5+OVERSCAN_TOP; x++ )
+		CbLookupPAL[x] = FT_B_d;
+	for( ; x < 310-OVERSCAN_BOT; x++ ) // 250
+		CbLookupPAL[x] = FT_LIN_d;
+	for( ; x < 310; x++ )
+		CbLookupPAL[x] = FT_B_d;
+	for( ; x < 312; x++ )
+		CbLookupPAL[x] = FT_STA_d;
+
+	//begin odd field
+	CbLookupPAL[x++] = FT_SRA_d;
+	for( ; x < 315; x++ )
+		CbLookupPAL[x] = FT_STB_d;
+	for( ; x < 317; x++ )
+		CbLookupPAL[x] = FT_STA_d;
+
+	for( ; x < 317+OVERSCAN_TOP; x++ )
+		CbLookupPAL[x] = FT_B_d;
+	for( ; x < 622-OVERSCAN_BOT; x++ )//562
+		CbLookupPAL[x] = FT_LIN_d;
+	for( ; x < 622; x++ )
+		CbLookupPAL[x] = FT_B_d;
+	for( ; x < 624; x++ )
+		CbLookupPAL[x] = FT_STA_d;
+	CbLookupPAL[x++] = FT_CLOSE_d;
+	CbLookupPAL[x++] = FT_CLOSE_d;
+
+// NTSC
+	//Because we're odd, we have to extend this by one byte.
+	uint8_t CbLookupNTSC[NTSC_LINES+1]; 
+	memset( CbLookupNTSC, 0, sizeof(CbLookupNTSC) );
+	x = 0;
+
 	//Setup the callback table.
 	for( x = 0; x < 3; x++ )
-		CbLookup[x] = FT_STA_d;
+		CbLookupNTSC[x] = FT_STA_d;
 	for( ; x < 6; x++ )
-		CbLookup[x] = FT_STB_d;
+		CbLookupNTSC[x] = FT_STB_d;
 	for( ; x < 9; x++ )
-		CbLookup[x] = FT_STA_d;
+		CbLookupNTSC[x] = FT_STA_d;
 	for( ; x < 24+6; x++ )
-		CbLookup[x] = FT_B_d;
+		CbLookupNTSC[x] = FT_B_d;
 	for( ; x < 256-15; x++ )
-		CbLookup[x] = FT_LIN_d;
+		CbLookupNTSC[x] = FT_LIN_d;
 	for( ; x < 263; x++ )
-		CbLookup[x] = FT_B_d;
+		CbLookupNTSC[x] = FT_B_d;
 
 	//263rd frame, begin odd sync.
 	for( ; x < 266; x++ )
-		CbLookup[x] = FT_STA_d;
+		CbLookupNTSC[x] = FT_STA_d;
 
-	CbLookup[x++] = FT_SRA_d;
+	CbLookupNTSC[x++] = FT_SRA_d;
 
 	for( ; x < 269; x++ )
-		CbLookup[x] = FT_STB_d;
+		CbLookupNTSC[x] = FT_STB_d;
 
-	CbLookup[x++] = FT_SRB_d;
+	CbLookupNTSC[x++] = FT_SRB_d;
 
 	for( ; x < 272; x++ )
-		CbLookup[x] = FT_STA_d;
+		CbLookupNTSC[x] = FT_STA_d;
 	for( ; x < 288+6; x++ )
-		CbLookup[x] = FT_B_d;
+		CbLookupNTSC[x] = FT_B_d;
 	for( ; x < 519-15; x++ )
-		CbLookup[x] = FT_LIN_d;
+		CbLookupNTSC[x] = FT_LIN_d;
 	for( ; x < NTSC_LINES-1; x++ )
-		CbLookup[x] = FT_B_d;
-	CbLookup[x] = FT_CLOSE_d;
-
+		CbLookupNTSC[x] = FT_B_d;
+	CbLookupNTSC[x] = FT_CLOSE_d;
 
 	FILE * f = fopen( "CbTable.h", "w" );
 	fprintf( f, "#ifndef _CBTABLE_H\n\
@@ -69,23 +114,42 @@ int main()
 #define FT_CLOSE 6\n\
 #define FT_MAX_d 7\n\
 \n\
-#define NTSC_LINES %d\n\
+uint8_t CbLookupPAL[%d];\n\
+uint8_t CbLookupNTSC[%d];\n\
 \n\
-uint8_t CbLookup[%d];\n\
+#ifdef PAL\n\
+#define VIDEO_LINES %d\n\
+#define CbLookup CbLookupPAL\n\
+#else\n\
+#define VIDEO_LINES %d\n\
+#define CbLookup CbLookupNTSC\n\
+#endif\n\
 \n\
-#endif\n\n", NTSC_LINES, (NTSC_LINES+1)/2 );
+#endif\n\n", (PAL_LINES+1)/2, (NTSC_LINES+1)/2, PAL_LINES,  NTSC_LINES );
 	fclose( f );
 
 	f = fopen( "CbTable.c", "w" );
 	fprintf( f, "#include \"CbTable.h\"\n\n" );
-	fprintf( f, "uint8_t CbLookup[%d] = {", (NTSC_LINES+1)/2 );
-	for( x = 0; x < 263; x++ )
+
+	fprintf( f, "uint8_t CbLookupPAL[%d] = {", (PAL_LINES+1)/2 );
+	for( x = 0; x < (PAL_LINES+1)/2; x++ )
 	{
 		if( (x & 0x0f) == 0 )
 		{
 			fprintf( f, "\n\t" );
 		}
-		fprintf( f, "0x%02x, ", CbLookup[x*2+0] | ( CbLookup[x*2+1]<<4 ) );
+		fprintf( f, "0x%02x, ", CbLookupPAL[x*2+0] | ( CbLookupPAL[x*2+1]<<4 ) );
+	}
+	fprintf( f, "};\n" );
+
+	fprintf( f, "uint8_t CbLookupNTSC[%d] = {", (NTSC_LINES+1)/2 );
+	for( x = 0; x < (NTSC_LINES+1)/2; x++ )
+	{
+		if( (x & 0x0f) == 0 )
+		{
+			fprintf( f, "\n\t" );
+		}
+		fprintf( f, "0x%02x, ", CbLookupNTSC[x*2+0] | ( CbLookupNTSC[x*2+1]<<4 ) );
 	}
 	fprintf( f, "};\n" );
 
