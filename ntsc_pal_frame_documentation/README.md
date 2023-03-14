@@ -45,9 +45,10 @@ Durations measured between half-amplitude points on the approriate edges
 | 5 | Peak-to-peak value of burst | 43±5 | 40±4 |
 | 7 | Peak level including chrominance signal | 133 | 120 |
 
-** Details of line synchronizing signals ** 
+**Details of line synchronizing signals**
 
 Build-up times measured between 10% to 90% of the pulse edges
+
 | Symbol | Characteristics | B,G/PAL | M/NTSC |
 | -- | -- | -- | -- |
 | H | Nominal line period (µs) | 64 | 63.5555 |
@@ -64,7 +65,7 @@ Build-up times measured between 10% to 90% of the pulse edges
 
 ![pal](pal_ntsc_from_kolumbus_fi_pami1_files/pal.gif)
 
-** Details of B,G/PAL field synchronizing signals **
+**Details of B,G/PAL field synchronizing signals**
 
 Durations measured between half-amplitude points on the approriate edges
 
@@ -88,7 +89,7 @@ Build-up times measured between 10% to 90% of the pulse edges
 
 ![ntsc](pal_ntsc_from_kolumbus_fi_pami1_files/ntsc.gif)
 
-** Details of M/NTSC field synchronizing signals **
+**Details of M/NTSC field synchronizing signals**
 
 Durations measured between half-amplitude points on the approriate edges
 
@@ -110,7 +111,7 @@ Build-up times measured between 10% to 90% of the pulse edges
 
 ## Radiated Signal
 
-** Characteristics of the radiated signal **
+**Characteristics of the radiated signal**
 
 Levels in this table are % of peak carrier.
 
