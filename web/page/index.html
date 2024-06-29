@@ -43,7 +43,7 @@ td { vertical-align: top; }
 <br><STRONG>Discrete Fourier Analysis:</strong>
 <TABLE>
 <TR><TD><CANVAS id=FTCanvas width=600 height=180></CANVAS></TD></TR>
-<TR><TD>DFT Frequencies from: <INPUT TYPE=text id=FTLow maxlength=7 value=60.0 size=7>MHz to <INPUT TYPE=text id=FTHigh maxlength=7 value=66.6 size=7>MHz @ Window of <INPUT TYPE=text value=100 id=FTWindow size=7> bits;  <input type="checkbox" id="usedbscale">Use dB scale.</TD></TR>
+<TR><TD>DFT Frequencies from: <INPUT TYPE=text id=FTLow maxlength=7 value=60.0 size=7>MHz to <INPUT TYPE=text id=FTHigh maxlength=7 value=66.6 size=7>MHz @ Window of <INPUT TYPE=text value=100 id=FTWindow size=7> bits sampling out at <INPUT TYPE=text id=FTSamplerate VALUE=80> MHz;  <input type="checkbox" id="usedbscale">Use dB scale.</TD></TR>
 <TR><TD><SELECT id=ProgramId></SELECT> | <INPUT type=text id=NTSCSaveName> <INPUT TYPE=submit onclick="SaveNTSCProgram()" Value=Save> | <INPUT TYPE=submit value="Upload As X" id=UploadColor onclick="UploadColorFunc();"><br><TEXTAREA ID=NTSCprogram COLS=80 ROWS=20></textarea></TD></TR>
 </TABLE>
 </div></td></tr>

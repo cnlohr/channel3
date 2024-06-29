@@ -94,7 +94,7 @@ function MakeProgram( KexecCode )
 		setTimeout('timedCount()',20);\n\
 	}\n\
 	self.addEventListener('message', function(e) { \n\
-	  dftlow = e.data[0]; dfthigh = e.data[1];  dftwindow = e.data[2]; cansend = true; \n\
+	  dftlow = e.data[0]; dfthigh = e.data[1];  dftwindow = e.data[2]; spsout = e.data[3]; cansend = true; \n\
 	}, false);\n\
 	\n\
 	timedCount();\n\
@@ -107,9 +107,10 @@ function UpdateDFTRange()
 {
 	var low = Number( $("#FTLow").val() );
 	var high = Number( $("#FTHigh").val() );
+	var spsout = Number( $("#FTSamplerate").val() );
 	var window = Number( $("#FTWindow").val() );
 	if( typeof( ntscWorker ) != 'undefined' )
-	    ntscWorker.postMessage( [low, high, window] ); // Start the worker.
+	    ntscWorker.postMessage( [low, high, window, spsout] ); // Start the worker.
 }
 
 function NTSCGotMessage(e) {
@@ -390,9 +391,11 @@ function LoadNTSC()
 	//Enumerate the values into the option array.
 	UpdateOptionArray();
 
+	$("#FTSamplerate").val( "80.0" );
 	$("#FTLow").val( "00.0" );
 	$("#FTHigh").val( "40.0" );
 	$("#FTWindow").val( "1408" );
+	$("#FTSamplerate").change(UpdateDFTRange);
 	$("#FTLow").change(UpdateDFTRange);
 	$("#FTHigh").change(UpdateDFTRange);
 	$("#FTWindow").change(UpdateDFTRange);
