@@ -2,6 +2,8 @@
 
 ESP8266 Analog Broadcast Television Interface
 
+If you are looking for the kolumbus.fi NTSC/PAL mirror, see it here: https://cnlohr.github.io/channel3/ntsc_pal_frame_documentation/pal_ntsc_from_kolumbus_fi_pami1.html
+
 Hook an antenna up to GPIO3/RX, tune your analog TV to Channel 3.  Power the ESP on!
 
 ## Background and RF
